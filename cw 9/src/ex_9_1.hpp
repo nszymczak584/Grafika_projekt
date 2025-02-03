@@ -53,7 +53,7 @@ glm::vec3 sunPos = glm::vec3(-4.740971f, 2.149999f, 0.369280f);
 glm::vec3 sunDir = glm::vec3(-0.93633f, 0.351106, 0.003226f);
 glm::vec3 sunColor = glm::vec3(0.9f, 0.9f, 0.7f)*5;
 
-glm::vec3 cameraPos = glm::vec3(0.479490f, 1.250000f, -2.124680f);
+glm::vec3 cameraPos = glm::vec3(0.479490f, 10.250000f, -20.124680f); // Adjust camera position
 glm::vec3 cameraDir = glm::vec3(-0.354510f, 0.000000f, 0.935054f);
 
 
@@ -78,6 +78,84 @@ float spotlightPhi = 3.14 / 4;
 float lastTime = -1.f;
 float deltaTime = 0.f;
 
+// Terrain generation and rendering functions
+void generateTerrain();
+void drawTerrain(glm::mat4 viewProjectionMatrix);
+void initTerrainShader();
+
+// Terrain variables
+const int terrainSize = 500;
+const float terrainScale = 0.2f;
+GLuint terrainVAO, terrainVBO, terrainEBO;
+GLuint terrainShader;
+
+// Prosta funkcja szumu - może zostać zastąpiona Perlin Noise
+float generateHeight(float x, float z) {
+	return sin(x * 0.1f) * cos(z * 0.1f) * 2.0f;
+}
+
+void generateTerrain() {
+	std::vector<float> vertices;
+	std::vector<unsigned int> indices;
+
+	for (int z = 0; z < terrainSize; ++z) {
+		for (int x = 0; x < terrainSize; ++x) {
+			float worldX = (x - terrainSize / 2) * terrainScale;
+			float worldZ = (z - terrainSize / 2) * terrainScale;
+			float height = generateHeight(worldX, worldZ);
+
+			vertices.push_back(worldX);
+			vertices.push_back(height);
+			vertices.push_back(worldZ);
+		}
+	}
+
+	for (int z = 0; z < terrainSize - 1; ++z) {
+		for (int x = 0; x < terrainSize - 1; ++x) {
+			int start = z * terrainSize + x;
+			indices.push_back(start);
+			indices.push_back(start + terrainSize);
+			indices.push_back(start + 1);
+
+			indices.push_back(start + 1);
+			indices.push_back(start + terrainSize);
+			indices.push_back(start + terrainSize + 1);
+		}
+	}
+
+	glGenVertexArrays(1, &terrainVAO);
+	glGenBuffers(1, &terrainVBO);
+	glGenBuffers(1, &terrainEBO);
+
+	glBindVertexArray(terrainVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindVertexArray(0);
+}
+
+void drawTerrain(glm::mat4 viewProjectionMatrix) {
+	glUseProgram(terrainShader);
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+	glm::mat4 mvp = viewProjectionMatrix * modelMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "mvp"), 1, GL_FALSE, &mvp[0][0]);
+
+	glBindVertexArray(terrainVAO);
+	glDrawElements(GL_TRIANGLES, (terrainSize - 1) * (terrainSize - 1) * 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+}
+
+void initTerrainShader() {
+	terrainShader = shaderLoader.CreateProgram("shaders/terrain.vert", "shaders/terrain.frag");
+}
 void updateDeltaTime(float time) {
 	if (lastTime < 0) {
 		lastTime = time;
@@ -104,24 +182,20 @@ glm::mat4 createCameraMatrix()
 	return cameraMatrix;
 }
 
-glm::mat4 createPerspectiveMatrix()
-{
-	
+glm::mat4 createPerspectiveMatrix() {
 	glm::mat4 perspectiveMatrix;
-	float n = 0.05;
-	float f = 20.;
+	float n = 0.05;  // Near plane
+	float f = 200.0; // Far plane (increased from 20.0 to 200.0)
 	float a1 = glm::min(aspectRatio, 1.f);
 	float a2 = glm::min(1 / aspectRatio, 1.f);
 	perspectiveMatrix = glm::mat4({
-		1,0.,0.,0.,
-		0.,aspectRatio,0.,0.,
-		0.,0.,(f+n) / (n - f),2*f * n / (n - f),
-		0.,0.,-1.,0.,
+		1, 0., 0., 0.,
+		0., aspectRatio, 0., 0.,
+		0., 0., (f + n) / (n - f), 2 * f * n / (n - f),
+		0., 0., -1., 0.,
 		});
 
-	
-	perspectiveMatrix=glm::transpose(perspectiveMatrix);
-
+	perspectiveMatrix = glm::transpose(perspectiveMatrix);
 	return perspectiveMatrix;
 }
 
@@ -171,15 +245,18 @@ void renderShadowapSun() {
 
 void renderScene(GLFWwindow* window)
 {
-	glClearColor(0.4f, 0.4f, 0.8f, 1.0f);
+	glClearColor(0.537f, 0.812f, 0.941f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	float time = glfwGetTime();
 	updateDeltaTime(time);
 	renderShadowapSun();
 
+	// Render terrain
+	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+	drawTerrain(viewProjectionMatrix);
+
 	//space lamp
 	glUseProgram(programSun);
-	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
 	glm::mat4 transformation = viewProjectionMatrix * glm::translate(pointlightPos) * glm::scale(glm::vec3(0.1));
 	glUniformMatrix4fv(glGetUniformLocation(programSun, "transformation"), 1, GL_FALSE, (float*)&transformation);
 	glUniform3f(glGetUniformLocation(programSun, "color"), sunColor.x / 2, sunColor.y / 2, sunColor.z / 2);
@@ -215,28 +292,14 @@ void renderScene(GLFWwindow* window)
 		0.,0.,0.,1.,
 		});
 
-
-	//drawObjectColor(shipContext,
-	//	glm::translate(cameraPos + 1.5 * cameraDir + cameraUp * -0.5f) * inveseCameraRotrationMatrix * glm::eulerAngleY(glm::pi<float>()),
-	//	glm::vec3(0.3, 0.3, 0.5)
-	//	);
 	drawObjectPBR(shipContext,
 		glm::translate(spaceshipPos) * specshipCameraRotrationMatrix * glm::eulerAngleY(glm::pi<float>()) * glm::scale(glm::vec3(0.03f)),
 		glm::vec3(0.3, 0.3, 0.5),
-		0.2,1.0
+		0.2, 1.0
 	);
 
 	spotlightPos = spaceshipPos + 0.2 * spaceshipDir;
 	spotlightConeDir = spaceshipDir;
-
-
-
-	//test depth buffer
-	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glUseProgram(programTest);
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, depthMap);
-	//Core::DrawContext(models::testContext);
 
 	glUseProgram(0);
 	glfwSwapBuffers(window);
@@ -273,7 +336,6 @@ void init(GLFWwindow* window)
 	loadModelToContext("./models/sphere.obj", sphereContext);
 	loadModelToContext("./models/spaceship.obj", shipContext);
 
-
 	loadModelToContext("./models/bed.obj", models::bedContext);
 	loadModelToContext("./models/chair.obj", models::chairContext);
 	loadModelToContext("./models/desk.obj", models::deskContext);
@@ -289,6 +351,9 @@ void init(GLFWwindow* window)
 	loadModelToContext("./models/window.obj", models::windowContext);
 	loadModelToContext("./models/test.obj", models::testContext);
 
+	// Initialize terrain
+	generateTerrain();
+	initTerrainShader();
 }
 
 void shutdown(GLFWwindow* window)
