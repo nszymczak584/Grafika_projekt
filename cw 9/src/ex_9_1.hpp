@@ -50,10 +50,10 @@ Core::RenderContext shipContext;
 Core::RenderContext sphereContext;
 
 glm::vec3 sunPos = glm::vec3(-4.740971f, 2.149999f, 0.369280f);
-glm::vec3 sunDir = glm::vec3(-0.93633f, 0.351106, 0.003226f);
-glm::vec3 sunColor = glm::vec3(0.9f, 0.9f, 0.7f)*5;
+glm::vec3 sunDir = glm::normalize(glm::vec3(-0.3f, -0.15f, 0.5f)); // Sun pointing downward
+glm::vec3 sunColor = glm::vec3(0.9f, 0.9f, 0.7f) * 5.0f; // Bright sunlight
 
-glm::vec3 cameraPos = glm::vec3(0.479490f, 10.250000f, -20.124680f); // Adjust camera position
+glm::vec3 cameraPos = glm::vec3(0.479490f, 10.250000f, -20.124680f); // Adjust as needed
 glm::vec3 cameraDir = glm::vec3(-0.354510f, 0.000000f, 0.935054f);
 
 
@@ -85,7 +85,7 @@ void initTerrainShader();
 
 // Terrain variables
 const int terrainSize = 500;
-const float terrainScale = 0.2f;
+const float terrainScale = 0.15f;
 GLuint terrainVAO, terrainVBO, terrainEBO;
 GLuint terrainShader;
 
@@ -97,7 +97,9 @@ float generateHeight(float x, float z) {
 void generateTerrain() {
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
+	std::vector<float> normals;
 
+	// Generate vertices and normals
 	for (int z = 0; z < terrainSize; ++z) {
 		for (int x = 0; x < terrainSize; ++x) {
 			float worldX = (x - terrainSize / 2) * terrainScale;
@@ -110,6 +112,26 @@ void generateTerrain() {
 		}
 	}
 
+	// Calculate normals
+	for (int z = 0; z < terrainSize; ++z) {
+		for (int x = 0; x < terrainSize; ++x) {
+			int index = z * terrainSize + x;
+
+			// Get neighboring heights
+			float hL = (x > 0) ? vertices[(z * terrainSize + (x - 1)) * 3 + 1] : vertices[index * 3 + 1];
+			float hR = (x < terrainSize - 1) ? vertices[(z * terrainSize + (x + 1)) * 3 + 1] : vertices[index * 3 + 1];
+			float hD = (z > 0) ? vertices[((z - 1) * terrainSize + x) * 3 + 1] : vertices[index * 3 + 1];
+			float hU = (z < terrainSize - 1) ? vertices[((z + 1) * terrainSize + x) * 3 + 1] : vertices[index * 3 + 1];
+
+			// Calculate normal
+			glm::vec3 normal = glm::normalize(glm::vec3(hL - hR, 1.0f, hD - hU));
+			normals.push_back(normal.x);
+			normals.push_back(normal.y);
+			normals.push_back(normal.z);
+		}
+	}
+
+	// Generate indices
 	for (int z = 0; z < terrainSize - 1; ++z) {
 		for (int x = 0; x < terrainSize - 1; ++x) {
 			int start = z * terrainSize + x;
@@ -123,20 +145,29 @@ void generateTerrain() {
 		}
 	}
 
+	// Create VAO, VBO, and EBO
 	glGenVertexArrays(1, &terrainVAO);
 	glGenBuffers(1, &terrainVBO);
 	glGenBuffers(1, &terrainEBO);
 
 	glBindVertexArray(terrainVAO);
 
+	// Bind vertices and normals to a single VBO
 	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, (vertices.size() + normals.size()) * sizeof(float), nullptr, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+	glBufferSubData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), normals.size() * sizeof(float), normals.data());
 
+	// Bind indices
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// Set vertex attributes
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Vertices
 	glEnableVertexAttribArray(0);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(vertices.size() * sizeof(float))); // Normals
+	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 }
@@ -243,8 +274,7 @@ void renderShadowapSun() {
 	glViewport(0, 0, WIDTH, HEIGHT);
 }
 
-void renderScene(GLFWwindow* window)
-{
+void renderScene(GLFWwindow* window) {
 	glClearColor(0.537f, 0.812f, 0.941f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	float time = glfwGetTime();
@@ -253,6 +283,15 @@ void renderScene(GLFWwindow* window)
 
 	// Render terrain
 	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+
+	glUseProgram(terrainShader);
+	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "mvp"), 1, GL_FALSE, &(viewProjectionMatrix * modelMatrix)[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
+	glUniform3f(glGetUniformLocation(terrainShader, "sunDir"), sunDir.x, sunDir.y, sunDir.z);
+	glUniform3f(glGetUniformLocation(terrainShader, "sunColor"), sunColor.x, sunColor.y, sunColor.z);
+	glUniform3f(glGetUniformLocation(terrainShader, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
 	drawTerrain(viewProjectionMatrix);
 
 	//space lamp
