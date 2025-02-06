@@ -112,20 +112,4 @@
     <None Include="shaders\terrain.frag" />
     <None Include="shaders\terrain.vert" />
   </ItemGroup>
-  <ItemGroup>
-    <Object Include="models\bed.obj" />
-    <Object Include="models\chair.obj" />
-    <Object Include="models\desk.obj" />
-    <Object Include="models\door.obj" />
-    <Object Include="models\drawer.obj" />
-    <Object Include="models\marbleBust.obj" />
-    <Object Include="models\materace.obj" />
-    <Object Include="models\pencils.obj" />
-    <Object Include="models\plane.obj" />
-    <Object Include="models\room.obj" />
-    <Object Include="models\spaceship.obj" />
-    <Object Include="models\sphere.obj" />
-    <Object Include="models\test.obj" />
-    <Object Include="models\window.obj" />
-  </ItemGroup>
 </Project>
