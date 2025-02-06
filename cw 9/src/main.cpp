@@ -8,11 +8,7 @@
 
 #include "ex_9_1.hpp"
 
-
-
-int main(int argc, char** argv)
-{
-	// inicjalizacja glfw
+int main(int argc, char** argv) {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -22,8 +18,14 @@ int main(int argc, char** argv)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-	// tworzenie okna za pomoca glfw
-	GLFWwindow* window = glfwCreateWindow(500, 500, "FirstWindow", NULL, NULL);
+	// Tryb pe³noekranowy 
+	GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+	WIDTH = mode->width;
+	HEIGHT = mode->height;
+
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGLBoidProject", primaryMonitor, NULL);
+
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -32,13 +34,10 @@ int main(int argc, char** argv)
 	}
 	glfwMakeContextCurrent(window);
 
-	// ladowanie OpenGL za pomoca glew
 	glewInit();
-	glViewport(0, 0, 500, 500);
 
 	init(window);
 
-	// uruchomienie glownej petli
 	renderLoop(window);
 
 	shutdown(window);
