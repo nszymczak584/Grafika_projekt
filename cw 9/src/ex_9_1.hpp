@@ -8,7 +8,7 @@
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
 //#include "Texture.h"
-
+#include "boid.h"
 #include "Box.cpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -20,6 +20,7 @@ const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 int WIDTH = 500, HEIGHT = 500;
 
 namespace models {
+	Core::RenderContext paperplaneContext;
 	Core::RenderContext bedContext;
 	Core::RenderContext chairContext;
 	Core::RenderContext deskContext;
@@ -56,10 +57,9 @@ glm::vec3 sunColor = glm::vec3(0.9f, 0.9f, 0.7f) * 5.0f; // Bright sunlight
 glm::vec3 cameraPos = glm::vec3(0.479490f, 10.250000f, -20.124680f); // Adjust as needed
 glm::vec3 cameraDir = glm::vec3(-0.354510f, 0.000000f, 0.935054f);
 
-
 glm::vec3 spaceshipPos = glm::vec3(0.065808f, 1.250000f, -2.189549f);
 glm::vec3 spaceshipDir = glm::vec3(-0.490263f, 0.000000f, 0.871578f);
-GLuint VAO,VBO;
+GLuint VAO, VBO;
 
 float aspectRatio = 1.f;
 
@@ -70,10 +70,8 @@ glm::vec3 pointlightColor = glm::vec3(0.9, 0.6, 0.6);
 
 glm::vec3 spotlightPos = glm::vec3(0, 0, 0);
 glm::vec3 spotlightConeDir = glm::vec3(0, 0, 0);
-glm::vec3 spotlightColor = glm::vec3(0.4, 0.4, 0.9)*3;
+glm::vec3 spotlightColor = glm::vec3(0.4, 0.4, 0.9) * 3;
 float spotlightPhi = 3.14 / 4;
-
-
 
 float lastTime = -1.f;
 float deltaTime = 0.f;
@@ -187,6 +185,7 @@ void drawTerrain(glm::mat4 viewProjectionMatrix) {
 void initTerrainShader() {
 	terrainShader = shaderLoader.CreateProgram("shaders/terrain.vert", "shaders/terrain.frag");
 }
+
 void updateDeltaTime(float time) {
 	if (lastTime < 0) {
 		lastTime = time;
@@ -197,15 +196,15 @@ void updateDeltaTime(float time) {
 	if (deltaTime > 0.1) deltaTime = 0.1;
 	lastTime = time;
 }
-glm::mat4 createCameraMatrix()
-{
-	glm::vec3 cameraSide = glm::normalize(glm::cross(cameraDir,glm::vec3(0.f,1.f,0.f)));
-	glm::vec3 cameraUp = glm::normalize(glm::cross(cameraSide,cameraDir));
+
+glm::mat4 createCameraMatrix() {
+	glm::vec3 cameraSide = glm::normalize(glm::cross(cameraDir, glm::vec3(0.f, 1.f, 0.f)));
+	glm::vec3 cameraUp = glm::normalize(glm::cross(cameraSide, cameraDir));
 	glm::mat4 cameraRotrationMatrix = glm::mat4({
-		cameraSide.x,cameraSide.y,cameraSide.z,0,
-		cameraUp.x,cameraUp.y,cameraUp.z ,0,
-		-cameraDir.x,-cameraDir.y,-cameraDir.z,0,
-		0.,0.,0.,1.,
+		cameraSide.x, cameraSide.y, cameraSide.z, 0,
+		cameraUp.x, cameraUp.y, cameraUp.z, 0,
+		-cameraDir.x, -cameraDir.y, -cameraDir.z, 0,
+		0., 0., 0., 1.,
 		});
 	cameraRotrationMatrix = glm::transpose(cameraRotrationMatrix);
 	glm::mat4 cameraMatrix = cameraRotrationMatrix * glm::translate(-cameraPos);
@@ -231,7 +230,6 @@ glm::mat4 createPerspectiveMatrix() {
 }
 
 void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec3 color, float roughness, float metallic) {
-
 	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
 	glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
 	glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, (float*)&transformation);
@@ -257,7 +255,6 @@ void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec
 	glUniform3f(glGetUniformLocation(program, "spotlightColor"), spotlightColor.x, spotlightColor.y, spotlightColor.z);
 	glUniform1f(glGetUniformLocation(program, "spotlightPhi"), spotlightPhi);
 	Core::DrawContext(context);
-
 }
 
 void renderShadowapSun() {
@@ -265,14 +262,12 @@ void renderShadowapSun() {
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	//uzupelnij o renderowanie glebokosci do tekstury
 
-
-
-
-
-
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, WIDTH, HEIGHT);
 }
+
+// Globalna zmienna przechowująca boidy
+std::vector<Boid> boids;
 
 void renderScene(GLFWwindow* window) {
 	glClearColor(0.537f, 0.812f, 0.941f, 1.0f);
@@ -293,6 +288,7 @@ void renderScene(GLFWwindow* window) {
 	glUniform3f(glGetUniformLocation(terrainShader, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
 	drawTerrain(viewProjectionMatrix);
+	// Clear the screen
 
 	//space lamp
 	glUseProgram(programSun);
@@ -317,7 +313,7 @@ void renderScene(GLFWwindow* window) {
 	drawObjectPBR(models::drawerContext, glm::mat4(), glm::vec3(0.428691f, 0.08022f, 0.036889f), 0.2f, 0.0f);
 	drawObjectPBR(models::marbleBustContext, glm::mat4(), glm::vec3(1.f, 1.f, 1.f), 0.5f, 1.0f);
 	drawObjectPBR(models::materaceContext, glm::mat4(), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
-	drawObjectPBR(models::pencilsContext, glm::mat4(), glm::vec3(0.10039f, 0.018356f, 0.001935f), 0.1f, 0.0f);
+
 	drawObjectPBR(models::planeContext, glm::mat4(), glm::vec3(0.402978f, 0.120509f, 0.057729f), 0.2f, 0.0f);
 	drawObjectPBR(models::roomContext, glm::mat4(), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
 	drawObjectPBR(models::windowContext, glm::mat4(), glm::vec3(0.402978f, 0.120509f, 0.057729f), 0.2f, 0.0f);
@@ -336,6 +332,25 @@ void renderScene(GLFWwindow* window) {
 		glm::vec3(0.3, 0.3, 0.5),
 		0.2, 1.0
 	);
+	// Update boids
+	for (auto& boid : boids) {
+		boid.update(boids);
+
+
+	}
+
+	for (const auto& boid : boids) {
+		float horizontalAngle = boid.getHorizontalAngle();
+		float verticalAngle = boid.getVerticalAngle();
+
+		// Tworzenie macierzy transformacji
+		glm::mat4 modelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
+			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *   
+			glm::scale(glm::vec3(0.02f)); 
+
+		drawObjectPBR(models::paperplaneContext, modelMatrix, glm::vec3(10.0f, 10.0f, 200.0f), 0.2f, 0.0f);
+	}
 
 	spotlightPos = spaceshipPos + 0.2 * spaceshipDir;
 	spotlightConeDir = spaceshipDir;
@@ -362,7 +377,6 @@ void loadModelToContext(std::string path, Core::RenderContext& context)
 	}
 	context.initFromAssimpMesh(scene->mMeshes[0]);
 }
-
 void init(GLFWwindow* window)
 {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -371,10 +385,21 @@ void init(GLFWwindow* window)
 	program = shaderLoader.CreateProgram("shaders/shader_9_1.vert", "shaders/shader_9_1.frag");
 	programTest = shaderLoader.CreateProgram("shaders/test.vert", "shaders/test.frag");
 	programSun = shaderLoader.CreateProgram("shaders/shader_8_sun.vert", "shaders/shader_8_sun.frag");
+	for (int groupId = 0; groupId < 5; ++groupId) {
+		for (int i = 0; i < 15; ++i) {
+			glm::vec3 position(
+				rand() % 2 - 0.5f,
+				rand() % 2 - 0.5f,
+				rand() % 2 - 0.5f
 
+
+			);
+			boids.push_back(Boid(position, groupId,i));
+		}
+	}
 	loadModelToContext("./models/sphere.obj", sphereContext);
 	loadModelToContext("./models/spaceship.obj", shipContext);
-
+	loadModelToContext("./models/paperAirplane.obj", models::paperplaneContext);
 	loadModelToContext("./models/bed.obj", models::bedContext);
 	loadModelToContext("./models/chair.obj", models::chairContext);
 	loadModelToContext("./models/desk.obj", models::deskContext);
@@ -393,6 +418,8 @@ void init(GLFWwindow* window)
 	// Initialize terrain
 	generateTerrain();
 	initTerrainShader();
+
+
 }
 
 void shutdown(GLFWwindow* window)
