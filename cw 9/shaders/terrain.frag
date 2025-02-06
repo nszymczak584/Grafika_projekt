@@ -14,9 +14,9 @@ void main()
     vec3 color;
     float height = FragPos.y; // Use the Y coordinate as height
 
-    if (height < 0.09) {
+    if (height < 1.2) {
         color = vec3(0.0, 0.0, 0.8); // Water (blue)
-    } else if (height < 1.5) {
+    } else if (height < 2.5) {
         color = vec3(0.1, 0.6, 0.1); // Grass (green)
     } else {
         color = vec3(1.0, 1.0, 1.0); // Snow (white)

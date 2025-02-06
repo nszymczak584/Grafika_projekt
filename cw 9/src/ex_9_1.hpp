@@ -7,13 +7,14 @@
 
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
-//#include "Texture.h"
+#include "Texture.h"
 
 #include "Box.cpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <string>
+#include "PerlinNoise.h"
 
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
@@ -85,13 +86,19 @@ void initTerrainShader();
 
 // Terrain variables
 const int terrainSize = 500;
-const float terrainScale = 0.15f;
+const float terrainScale = 1.0f;
 GLuint terrainVAO, terrainVBO, terrainEBO;
 GLuint terrainShader;
 
-// Prosta funkcja szumu - może zostać zastąpiona Perlin Noise
+
+
+// Global Perlin noise object
+PerlinNoise perlinNoise;
+
 float generateHeight(float x, float z) {
-	return sin(x * 0.1f) * cos(z * 0.1f) * 2.0f;
+	float scale = 0.1f;
+	float heightScale = 4.0f;
+	return perlinNoise.noise(x * scale, z * scale, 0.0f) * heightScale;
 }
 
 void generateTerrain() {
