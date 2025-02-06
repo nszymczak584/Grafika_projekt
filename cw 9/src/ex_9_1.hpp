@@ -14,6 +14,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <string>
+#include "Skybox.h"
 
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
@@ -277,6 +278,9 @@ void renderShadowapSun() {
 void renderScene(GLFWwindow* window) {
 	glClearColor(0.537f, 0.812f, 0.941f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	drawSkybox(createCameraMatrix(), createPerspectiveMatrix());
+
 	float time = glfwGetTime();
 	updateDeltaTime(time);
 	renderShadowapSun();
@@ -372,6 +376,8 @@ void init(GLFWwindow* window)
 	programTest = shaderLoader.CreateProgram("shaders/test.vert", "shaders/test.frag");
 	programSun = shaderLoader.CreateProgram("shaders/shader_8_sun.vert", "shaders/shader_8_sun.frag");
 
+	initSkybox(shaderLoader, loadModelToContext);
+	
 	loadModelToContext("./models/sphere.obj", sphereContext);
 	loadModelToContext("./models/spaceship.obj", shipContext);
 
