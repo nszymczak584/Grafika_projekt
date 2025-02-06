@@ -45,14 +45,16 @@ GLuint programSun;
 GLuint programTest;
 GLuint programTex;
 
+GLuint terrainTexture;
+
 Core::Shader_Loader shaderLoader;
 
 Core::RenderContext shipContext;
 Core::RenderContext sphereContext;
 
 glm::vec3 sunPos = glm::vec3(-4.740971f, 2.149999f, 0.369280f);
-glm::vec3 sunDir = glm::normalize(glm::vec3(-0.3f, -0.15f, 0.5f)); // Sun pointing downward
-glm::vec3 sunColor = glm::vec3(0.9f, 0.9f, 0.7f) * 5.0f; // Bright sunlight
+glm::vec3 sunDir = glm::normalize(glm::vec3(-1.0f, -0.6f, 0.5f)); // Sun pointing downward
+glm::vec3 sunColor = glm::vec3(0.8f, 0.8f, 0.6f) * 4.0f; // Bright sunlight
 
 glm::vec3 cameraPos = glm::vec3(0.479490f, 10.250000f, -20.124680f); // Adjust as needed
 glm::vec3 cameraDir = glm::vec3(-0.354510f, 0.000000f, 0.935054f);
@@ -96,30 +98,37 @@ GLuint terrainShader;
 PerlinNoise perlinNoise;
 
 float generateHeight(float x, float z) {
-	float scale = 0.1f;
-	float heightScale = 4.0f;
-	return perlinNoise.noise(x * scale, z * scale, 0.0f) * heightScale;
+	float scale = 0.065f;
+	float heightScale = 5.0f;
+	float baseHeight = -4.0f; // Lower the terrain by 5 units
+	return perlinNoise.noise(x * scale, z * scale, 0.0f) * heightScale + baseHeight;
 }
 
 void generateTerrain() {
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<float> normals;
+	std::vector<float> texCoords; // Texture coordinates
 
-	// Generate vertices and normals
+	// Generate vertices, normals, and texture coordinates
 	for (int z = 0; z < terrainSize; ++z) {
 		for (int x = 0; x < terrainSize; ++x) {
 			float worldX = (x - terrainSize / 2) * terrainScale;
 			float worldZ = (z - terrainSize / 2) * terrainScale;
 			float height = generateHeight(worldX, worldZ);
 
+			// Vertex position
 			vertices.push_back(worldX);
 			vertices.push_back(height);
 			vertices.push_back(worldZ);
+
+			// Texture coordinates (normalized to [0, 1])
+			texCoords.push_back((float)x / (terrainSize - 1));
+			texCoords.push_back((float)z / (terrainSize - 1));
 		}
 	}
 
-	// Calculate normals
+	// Calculate normals (same as before)
 	for (int z = 0; z < terrainSize; ++z) {
 		for (int x = 0; x < terrainSize; ++x) {
 			int index = z * terrainSize + x;
@@ -138,7 +147,7 @@ void generateTerrain() {
 		}
 	}
 
-	// Generate indices
+	// Generate indices (same as before)
 	for (int z = 0; z < terrainSize - 1; ++z) {
 		for (int x = 0; x < terrainSize - 1; ++x) {
 			int start = z * terrainSize + x;
@@ -159,11 +168,12 @@ void generateTerrain() {
 
 	glBindVertexArray(terrainVAO);
 
-	// Bind vertices and normals to a single VBO
+	// Bind vertices, normals, and texture coordinates to a single VBO
 	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
-	glBufferData(GL_ARRAY_BUFFER, (vertices.size() + normals.size()) * sizeof(float), nullptr, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, (vertices.size() + normals.size() + texCoords.size()) * sizeof(float), nullptr, GL_STATIC_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
 	glBufferSubData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), normals.size() * sizeof(float), normals.data());
+	glBufferSubData(GL_ARRAY_BUFFER, (vertices.size() + normals.size()) * sizeof(float), texCoords.size() * sizeof(float), texCoords.data());
 
 	// Bind indices
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
@@ -176,14 +186,31 @@ void generateTerrain() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(vertices.size() * sizeof(float))); // Normals
 	glEnableVertexAttribArray(1);
 
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)((vertices.size() + normals.size()) * sizeof(float))); // Texture coordinates
+	glEnableVertexAttribArray(2);
+
 	glBindVertexArray(0);
 }
 
 void drawTerrain(glm::mat4 viewProjectionMatrix) {
 	glUseProgram(terrainShader);
+
+	// Bind the texture
+	Core::SetActiveTexture(terrainTexture, "terrainTexture", terrainShader, 0);
+
 	glm::mat4 modelMatrix = glm::mat4(1.0f);
 	glm::mat4 mvp = viewProjectionMatrix * modelMatrix;
 	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "mvp"), 1, GL_FALSE, &mvp[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
+
+	// Set the texture scaling factor
+	float textureScale = 10.0f; // Adjust this value to control texture repetition
+	glUniform1f(glGetUniformLocation(terrainShader, "textureScale"), textureScale);
+
+	// Set lighting uniforms (if not already set)
+	glUniform3f(glGetUniformLocation(terrainShader, "sunDir"), sunDir.x, sunDir.y, sunDir.z);
+	glUniform3f(glGetUniformLocation(terrainShader, "sunColor"), sunColor.x, sunColor.y, sunColor.z);
+	glUniform3f(glGetUniformLocation(terrainShader, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
 	glBindVertexArray(terrainVAO);
 	glDrawElements(GL_TRIANGLES, (terrainSize - 1) * (terrainSize - 1) * 6, GL_UNSIGNED_INT, 0);
@@ -397,6 +424,12 @@ void init(GLFWwindow* window)
 	loadModelToContext("./models/window.obj", models::windowContext);
 	loadModelToContext("./models/test.obj", models::testContext);
 
+
+	// Load terrain texture
+	terrainTexture = Core::LoadTexture("./textures/terrain.jpg");
+	if (terrainTexture == 0) {
+		std::cerr << "Failed to load terrain texture!" << std::endl;
+	}
 	// Initialize terrain
 	generateTerrain();
 	initTerrainShader();
