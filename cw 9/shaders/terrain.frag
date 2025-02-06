@@ -3,24 +3,20 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec2 TexCoord; // Texture coordinates from the vertex shader
 
 uniform vec3 sunDir;
 uniform vec3 sunColor;
 uniform vec3 cameraPos;
+uniform sampler2D terrainTexture; // Texture sampler
 
 void main()
 {
-    // Height-based coloring
-    vec3 color;
-    float height = FragPos.y; // Use the Y coordinate as height
+    // Sample the texture
+    vec4 textureColor = texture(terrainTexture, TexCoord);
 
-    if (height < 0.09) {
-        color = vec3(0.0, 0.0, 0.8); // Water (blue)
-    } else if (height < 1.5) {
-        color = vec3(0.1, 0.6, 0.1); // Grass (green)
-    } else {
-        color = vec3(1.0, 1.0, 1.0); // Snow (white)
-    }
+    
+    vec3 finalColor = textureColor.rgb ;
 
     // Lighting calculations
     vec3 norm = normalize(Normal);
@@ -36,8 +32,8 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = spec * sunColor;
 
-    // Combine lighting with terrain color
-    vec3 result = (diffuse + specular) * color;
+    // Combine lighting with final color
+    vec3 result = (diffuse + specular) * finalColor;
 
     FragColor = vec4(result, 1.0);
 }
