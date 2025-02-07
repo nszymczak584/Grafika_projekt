@@ -14,6 +14,7 @@ public:
     int getGroupId() const;
     int getid() const;
 
+    void applyForce(const glm::vec3& force);
 
     float getVerticalAngle() const;
     float getHorizontalAngle() const;
