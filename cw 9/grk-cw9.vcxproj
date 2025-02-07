@@ -47,6 +47,8 @@
     <None Include="shaders\shader_9_1.vert" />
     <None Include="shaders\shader_8_sun.frag" />
     <None Include="shaders\shader_8_sun.vert" />
+    <None Include="shaders\shader_textured.frag" />
+    <None Include="shaders\shader_textured.vert" />
     <None Include="shaders\skyboxShader.frag" />
     <None Include="shaders\skyboxShader.vert" />
     <None Include="shaders\terrain.frag" />
