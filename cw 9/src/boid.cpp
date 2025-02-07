@@ -68,7 +68,7 @@ void Boid::update(const std::vector<Boid>& boids) {
     float targetHorizontalAngle = atan2(velocity.x, velocity.z);
 
     float targetVerticalAngle = atan2(-velocity.y, glm::length(glm::vec2(velocity.x, velocity.z)));
-    float rotationDamping = 0.03f; 
+    float rotationDamping = 0.1f; 
     horizontalAngle += (targetHorizontalAngle - horizontalAngle) * rotationDamping;
     verticalAngle += (targetVerticalAngle - verticalAngle) * rotationDamping;
 }

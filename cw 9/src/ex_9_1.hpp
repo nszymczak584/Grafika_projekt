@@ -355,7 +355,7 @@ void renderScene(GLFWwindow* window) {
 	drawObjectPBR(models::materaceContext, glm::mat4(), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
 
 	drawObjectPBR(models::planeContext, glm::mat4(), glm::vec3(0.402978f, 0.120509f, 0.057729f), 0.2f, 0.0f);
-	drawObjectPBR(models::roomContext, glm::mat4(), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
+	drawObjectPBR(models::roomContext, glm::scale(glm::vec3(0.5)), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
 	drawObjectPBR(models::windowContext, glm::mat4(), glm::vec3(0.402978f, 0.120509f, 0.057729f), 0.2f, 0.0f);
 
 	glm::vec3 spaceshipSide = glm::normalize(glm::cross(spaceshipDir, glm::vec3(0.f, 1.f, 0.f)));
@@ -453,7 +453,7 @@ void init(GLFWwindow* window)
 	loadModelToContext("./models/materace.obj", models::materaceContext);
 	loadModelToContext("./models/pencils.obj", models::pencilsContext);
 	loadModelToContext("./models/plane.obj", models::planeContext);
-	loadModelToContext("./models/room.obj", models::roomContext);
+	loadModelToContext("./models/temple.obj", models::roomContext);
 	loadModelToContext("./models/spaceship.obj", models::spaceshipContext);
 	loadModelToContext("./models/sphere.obj", models::sphereContext);
 	loadModelToContext("./models/window.obj", models::windowContext);
