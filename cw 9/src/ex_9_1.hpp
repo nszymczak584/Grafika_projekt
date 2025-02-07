@@ -387,9 +387,9 @@ void renderScene(GLFWwindow* window) {
 		glm::mat4 modelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
 			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *   
-			glm::scale(glm::vec3(0.02f)); 
+			glm::scale(glm::vec3(0.005f)); 
 
-		drawObjectPBR(models::paperplaneContext, modelMatrix, glm::vec3(10.0f, 10.0f, 200.0f), 0.2f, 0.0f);
+		drawObjectPBR(models::paperplaneContext, modelMatrix, glm::vec3(boid.getGroupId() * 40.0f, 10.0f, boid.getGroupId()*40.0f), 0.2f, 0.0f);
 	}
 
 	spotlightPos = spaceshipPos + 0.2 * spaceshipDir;
@@ -425,12 +425,13 @@ void init(GLFWwindow* window)
 	program = shaderLoader.CreateProgram("shaders/shader_9_1.vert", "shaders/shader_9_1.frag");
 	programTest = shaderLoader.CreateProgram("shaders/test.vert", "shaders/test.frag");
 	programSun = shaderLoader.CreateProgram("shaders/shader_8_sun.vert", "shaders/shader_8_sun.frag");
-	for (int groupId = 0; groupId < 5; ++groupId) {
-		for (int i = 0; i < 15; ++i) {
+	for (int groupId = 0; groupId < 6; ++groupId) {
+		for (int i = 0; i < 40; ++i) {
 			glm::vec3 position(
-				rand() % 2 - 0.5f,
-				rand() % 2 - 0.5f,
-				rand() % 2 - 0.5f
+				(rand() % 200 + 0.1f) / 100.f,
+				(rand() % 200 + 0.1f) / 100.f,
+				(rand() % 200 + 0.1f)/100.f
+
 
 
 			);

@@ -8,19 +8,20 @@ const float MAX_SPEED = 1.0f;
 const float NEIGHBOR_RADIUS = 2.0f;
 const float AVOID_RADIUS = 0.5f;
 
-const float ALIGNMENT_WEIGHT = 0.5f;
-const float COHESION_WEIGHT = 10.0f;
+const float ALIGNMENT_WEIGHT = 3.0f;
+const float COHESION_WEIGHT = 4.0f;
 const float SEPARATION_WEIGHT = 5.0f;
 
 Boid::Boid(glm::vec3 position, int groupId, int id)
     : position(position), velocity(glm::vec3(1.0f)), groupId(groupId), id(id), horizontalAngle(0.0f), verticalAngle(0.0f) {}
 void Boid::checkBounds() {
     float boundary = 5.0f; 
+    float boundarydown = 0.0f;
 
     if (position.x > boundary) {
         position.x = boundary;
         velocity.x *= -1;
-    } else if (position.x < -boundary) {
+    } else if (position.x < boundarydown) {
         position.x = -boundary;
         velocity.x *= -1;
     }
