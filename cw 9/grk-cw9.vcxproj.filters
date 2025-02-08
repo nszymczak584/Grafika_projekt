@@ -54,6 +54,18 @@
     <ClCompile Include="src\PerlinNoise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\boid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BoidInteraction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Skybox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Drone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\objload.h">
@@ -95,6 +107,18 @@
     <ClInclude Include="src\PerlinNoise.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\boid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BoidInteraction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Skybox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Drone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader_8_sun.vert">
@@ -117,5 +141,9 @@
     </None>
     <None Include="shaders\terrain.frag" />
     <None Include="shaders\terrain.vert" />
+    <None Include="shaders\shader_textured.frag" />
+    <None Include="shaders\shader_textured.vert" />
+    <None Include="shaders\skyboxShader.frag" />
+    <None Include="shaders\skyboxShader.vert" />
   </ItemGroup>
 </Project>
