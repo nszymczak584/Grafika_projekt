@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
 	}
 	glfwMakeContextCurrent(window);
 
+	framebuffer_size_callback(window, mode->width, mode->height);
 	glewInit();
 
 	init(window);

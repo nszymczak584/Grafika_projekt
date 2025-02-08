@@ -15,6 +15,7 @@
     <ClCompile Include="src\BoidInteraction.cpp" />
     <ClCompile Include="src\Box.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Drone.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\PerlinNoise.cpp" />
     <ClCompile Include="src\Render_Utils.cpp" />
@@ -30,6 +31,7 @@
     <ClInclude Include="src\boid.h" />
     <ClInclude Include="src\BoidInteraction.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Drone.h" />
     <ClInclude Include="src\ex_9_1.hpp" />
     <ClInclude Include="src\objload.h" />
     <ClInclude Include="src\PerlinNoise.h" />
