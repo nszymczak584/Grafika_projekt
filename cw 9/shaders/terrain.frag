@@ -20,7 +20,7 @@ void main()
 
     // Lighting calculations
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(-sunDir); // Sun direction
+    vec3 lightDir = normalize(sunDir);
 
     // Diffuse lighting
     float diff = max(dot(norm, lightDir), 0.0);

@@ -157,3 +157,16 @@ glm::vec3 Boid::separation(const std::vector<Boid>& boids) {
 
     return avoidVector;
 }
+
+void Boid::applyForce(const glm::vec3& force) {
+    velocity += force;
+
+    float maxSpeed = 0.01f;
+    if (glm::length(velocity) > maxSpeed) {
+        velocity = glm::normalize(velocity) * maxSpeed;
+    }
+
+    position += velocity;
+
+    checkBounds();
+}

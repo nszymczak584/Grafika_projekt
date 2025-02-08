@@ -1,4 +1,4 @@
-﻿#include "glew.h"
+#include "glew.h"
 #include <GLFW/glfw3.h>
 #include "glm.hpp"
 #include "ext.hpp"
@@ -18,6 +18,7 @@
 #include <string>
 #include "Skybox.h"
 #include "PerlinNoise.h"
+#include "BoidInteraction.h"
 
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
@@ -64,15 +65,22 @@ Core::Shader_Loader shaderLoader;
 Core::RenderContext shipContext;
 Core::RenderContext sphereContext;
 
-glm::vec3 sunPos = glm::vec3(-4.740971f, 2.149999f, 0.369280f);
-glm::vec3 sunDir = glm::normalize(glm::vec3(-1.0f, -0.6f, 0.5f)); // Sun pointing downward
+//glm::vec3 sunPos = glm::vec3(-4.740971f, 2.149999f, 0.369280f);
+//glm::vec3 sunPos = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 sunPos = glm::vec3(20.0f, 40.0f, -65.0f);
+
+//glm::vec3 sunDir = glm::normalize(glm::vec3(-1.0f, -0.6f, 0.5f)); // Sun pointing downward
+//glm::vec3 sunDir = glm::normalize(glm::vec3(-0.228586f, -0.584819f, 0.778293f)); // Kierunek słońca dopasowany do SkyBox
+glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
 glm::vec3 sunColor = glm::vec3(0.8f, 0.8f, 0.6f) * 4.0f; // Bright sunlight
 
 glm::vec3 cameraPos = glm::vec3(0.479490f, 10.250000f, -20.124680f); // Adjust as needed
 glm::vec3 cameraDir = glm::vec3(-0.354510f, 0.000000f, 0.935054f);
 
 glm::vec3 spaceshipPos = glm::vec3(0.065808f, 1.250000f, -2.189549f);
+//glm::vec3 spaceshipPos = sunPos;
 glm::vec3 spaceshipDir = glm::vec3(-0.490263f, 0.000000f, 0.871578f);
+//glm::vec3 spaceshipDir = sunDir;
 GLuint VAO, VBO;
 
 float aspectRatio = 1.f;
@@ -446,6 +454,8 @@ void renderScene(GLFWwindow* window) {
 	spotlightPos = spaceshipPos + 0.2 * spaceshipDir;
 	spotlightConeDir = spaceshipDir;
 
+	renderInteractionIndicators(drawObjectPBR);
+  
 	glUseProgram(programTextured);
 	for (const auto& position : treePositions) {
 		// Create model matrix for the tree
@@ -564,7 +574,6 @@ void shutdown(GLFWwindow* window)
 	shaderLoader.DeleteProgram(program);
 }
 
-//obsluga wejscia
 void processInput(GLFWwindow* window)
 {
 	glm::vec3 spaceshipSide = glm::normalize(glm::cross(spaceshipDir, glm::vec3(0.f,1.f,0.f)));
@@ -606,6 +615,24 @@ void processInput(GLFWwindow* window)
 
 	//cameraDir = glm::normalize(-cameraPos);
 
+
+	// Spaceship Pitch
+	// Pitch (obrót wokół osi bocznej statku)
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+		glm::mat4 pitchRotation = glm::eulerAngleX(angleSpeed);
+		spaceshipDir = glm::vec3(pitchRotation * glm::vec4(spaceshipDir, 0.0f));
+		spaceshipUp = glm::normalize(glm::cross(spaceshipSide, spaceshipDir));
+	}
+	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+		glm::mat4 pitchRotation = glm::eulerAngleX(-angleSpeed);
+		spaceshipDir = glm::vec3(pitchRotation * glm::vec4(spaceshipDir, 0.0f));
+		spaceshipUp = glm::normalize(glm::cross(spaceshipSide, spaceshipDir));
+	}
+
+	printf("Wektor  : glm::vec3(%.6ff, %.6ff, %.6ff);\n",spaceshipDir.x, spaceshipDir.y, spaceshipDir.z);
+	printf("Pozycja : glm::vec3(%.6ff, %.6ff, %.6ff);\n",spaceshipPos.x, spaceshipPos.y, spaceshipPos.z);
+
+	handleBoidInteraction(window, boids);
 }
 
 // funkcja jest glowna petla
@@ -618,4 +645,3 @@ void renderLoop(GLFWwindow* window) {
 		glfwPollEvents();
 	}
 }
-//}
