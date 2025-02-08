@@ -1,4 +1,4 @@
-﻿#include "glew.h"
+#include "glew.h"
 #include <GLFW/glfw3.h>
 #include "glm.hpp"
 #include "ext.hpp"
@@ -40,6 +40,13 @@ namespace models {
 	Core::RenderContext sphereContext;
 	Core::RenderContext windowContext;
 	Core::RenderContext testContext;
+	Core::RenderContext treeContext;
+	Core::RenderContext leavesContext;
+}
+namespace texture {
+	GLuint bark;
+	GLuint leaves;
+	GLuint temple;
 }
 
 GLuint depthMapFBO;
@@ -49,6 +56,7 @@ GLuint program;
 GLuint programSun;
 GLuint programTest;
 GLuint programTex;
+GLuint programTextured;
 
 GLuint terrainTexture;
 
@@ -90,13 +98,21 @@ float spotlightPhi = 3.14 / 4;
 float lastTime = -1.f;
 float deltaTime = 0.f;
 
+std::vector<glm::vec3> treePositions; // Global variable to store tree positions
+
+// Define the flat area for the temple
+const float flatAreaSize = 20.0f; // Size of the flat area
+const float flatAreaHeight = 0.0f; // Height of the flat area
+
+
+
 // Terrain generation and rendering functions
 void generateTerrain();
 void drawTerrain(glm::mat4 viewProjectionMatrix);
 void initTerrainShader();
 
 // Terrain variables
-const int terrainSize = 500;
+const int terrainSize = 350;
 const float terrainScale = 1.0f;
 GLuint terrainVAO, terrainVBO, terrainEBO;
 GLuint terrainShader;
@@ -107,9 +123,16 @@ GLuint terrainShader;
 PerlinNoise perlinNoise;
 
 float generateHeight(float x, float z) {
+	// Check if the current position is within the flat area
+	if (x >= -flatAreaSize / 2 && x <= flatAreaSize / 2 &&
+		z >= -flatAreaSize / 2 && z <= flatAreaSize / 2) {
+		return flatAreaHeight; // Return the flat height
+	}
+
+	// Otherwise, generate terrain height using Perlin noise
 	float scale = 0.065f;
 	float heightScale = 5.0f;
-	float baseHeight = -4.0f; // Lower the terrain by 5 units
+	float baseHeight = -2.6f; // Lower the terrain by 5 units
 	return perlinNoise.noise(x * scale, z * scale, 0.0f) * heightScale + baseHeight;
 }
 
@@ -302,6 +325,32 @@ void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec
 	Core::DrawContext(context);
 }
 
+
+void drawObjectTextured(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID) {
+	glUseProgram(programTextured);
+
+	// Set transformation and model matrices
+	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+	glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
+	glUniformMatrix4fv(glGetUniformLocation(programTextured, "transformation"), 1, GL_FALSE, (float*)&transformation);
+	glUniformMatrix4fv(glGetUniformLocation(programTextured, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
+
+	// Set light position (use your existing light position)
+	glUniform3f(glGetUniformLocation(programTextured, "lightPos"), pointlightPos.x, pointlightPos.y, pointlightPos.z);
+
+	// Bind the texture
+	Core::SetActiveTexture(textureID, "colorTexture", programTextured, 0);
+	glUniform1i(glGetUniformLocation(programTextured, "colorTexture"), 0);
+
+	// Draw the object
+	Core::DrawContext(context);
+
+	glUseProgram(0);
+}
+
+
+
+
 void renderShadowapSun() {
 	float time = glfwGetTime();
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -363,8 +412,10 @@ void renderScene(GLFWwindow* window) {
 	drawObjectPBR(models::materaceContext, glm::mat4(), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
 
 	drawObjectPBR(models::planeContext, glm::mat4(), glm::vec3(0.402978f, 0.120509f, 0.057729f), 0.2f, 0.0f);
-	drawObjectPBR(models::roomContext, glm::scale(glm::vec3(0.5)), glm::vec3(0.9f, 0.9f, 0.9f), 0.8f, 0.0f);
+	
 	drawObjectPBR(models::windowContext, glm::mat4(), glm::vec3(0.402978f, 0.120509f, 0.057729f), 0.2f, 0.0f);
+
+
 
 	glm::vec3 spaceshipSide = glm::normalize(glm::cross(spaceshipDir, glm::vec3(0.f, 1.f, 0.f)));
 	glm::vec3 spaceshipUp = glm::normalize(glm::cross(spaceshipSide, spaceshipDir));
@@ -404,6 +455,22 @@ void renderScene(GLFWwindow* window) {
 	spotlightConeDir = spaceshipDir;
 
 	renderInteractionIndicators(drawObjectPBR);
+  
+	glUseProgram(programTextured);
+	for (const auto& position : treePositions) {
+		// Create model matrix for the tree
+		glm::mat4 treeModelMatrix = glm::translate(glm::mat4(), position) * glm::scale(glm::mat4(), glm::vec3(0.2));
+
+		// Draw the tree trunk
+		drawObjectTextured(models::treeContext, treeModelMatrix, texture::bark);
+
+		// Draw the tree leaves
+		drawObjectTextured(models::leavesContext, treeModelMatrix, texture::leaves);
+	}
+
+
+	glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
+	drawObjectTextured(models::roomContext, templeModelMatrix, texture::temple);
 
 	glUseProgram(0);
 	glfwSwapBuffers(window);
@@ -432,9 +499,11 @@ void init(GLFWwindow* window)
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	glEnable(GL_DEPTH_TEST);
+
 	program = shaderLoader.CreateProgram("shaders/shader_9_1.vert", "shaders/shader_9_1.frag");
 	programTest = shaderLoader.CreateProgram("shaders/test.vert", "shaders/test.frag");
 	programSun = shaderLoader.CreateProgram("shaders/shader_8_sun.vert", "shaders/shader_8_sun.frag");
+	programTextured = shaderLoader.CreateProgram("shaders/shader_textured.vert", "shaders/shader_textured.frag");
 	for (int groupId = 0; groupId < 6; ++groupId) {
 		for (int i = 0; i < 40; ++i) {
 			glm::vec3 position(
@@ -447,6 +516,16 @@ void init(GLFWwindow* window)
 			);
 			boids.push_back(Boid(position, groupId,i));
 		}
+	}
+
+	for (int i = 0; i < 100; ++i) {
+		// Generate random position within the terrain bounds
+		float x = static_cast<float>(rand() % terrainSize) - terrainSize / 2;
+		float z = static_cast<float>(rand() % terrainSize) - terrainSize / 2;
+		float y = generateHeight(x, z); // Get the height of the terrain at this position
+
+		// Store the position in the global vector
+		treePositions.push_back(glm::vec3(x, y, z));
 	}
 
 	initSkybox(shaderLoader, loadModelToContext);
@@ -469,6 +548,10 @@ void init(GLFWwindow* window)
 	loadModelToContext("./models/window.obj", models::windowContext);
 	loadModelToContext("./models/test.obj", models::testContext);
 
+	loadModelToContext("./models/MapleTree.obj", models::treeContext);
+	loadModelToContext("./models/MapleTreeLeaves.obj", models::leavesContext);
+
+
 
 	// Load terrain texture
 	terrainTexture = Core::LoadTexture("./textures/terrain.jpg");
@@ -478,6 +561,10 @@ void init(GLFWwindow* window)
 	// Initialize terrain
 	generateTerrain();
 	initTerrainShader();
+
+	texture::bark = Core::LoadTexture("textures/bark.jpg");
+	texture::leaves = Core::LoadTexture("textures/leaf.png");
+	texture::temple = Core::LoadTexture("textures/temple/map.png");
 
 
 }
