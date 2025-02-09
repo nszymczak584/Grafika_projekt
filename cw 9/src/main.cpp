@@ -5,8 +5,8 @@
 #include "ext.hpp"
 #include <iostream>
 #include <cmath>
-
-#include "ex_9_1.hpp"
+#include "Window.h"
+#include "BoidSimulation.hpp"
 
 int main(int argc, char** argv) {
 	glfwInit();
@@ -14,9 +14,9 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+	#ifdef __APPLE__
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	#endif
 
 	// Tryb pe³noekranowy 
 	GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 	}
 	glfwMakeContextCurrent(window);
 
-	framebuffer_size_callback(window, mode->width, mode->height);
+	framebuffer_size_callback(window, WIDTH, HEIGHT);
 	glewInit();
 
 	init(window);

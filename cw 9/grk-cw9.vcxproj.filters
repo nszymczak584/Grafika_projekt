@@ -66,23 +66,20 @@
     <ClCompile Include="src\Drone.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Tree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Temple.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Terrain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\objload.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Render_Utils.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Shader_Loader.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Camera.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Texture.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\SOIL\image_helper.h">
       <Filter>Source Files\SOIL</Filter>
     </ClInclude>
@@ -104,9 +101,6 @@
     <ClInclude Include="src\ex_9_1.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\PerlinNoise.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\boid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -119,31 +113,55 @@
     <ClInclude Include="src\Drone.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Tree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Temple.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shader_Loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Render_Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PerlinNoise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\objload.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader_8_sun.vert">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\shader_8_sun.frag">
-      <Filter>Shader Files</Filter>
-    </None>
     <None Include="shaders\shader_9_1.frag">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\shader_9_1.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\test.frag">
+    <None Include="shaders\shader_skybox.frag">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\test.vert">
+    <None Include="shaders\shader_skybox.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\terrain.frag" />
-    <None Include="shaders\terrain.vert" />
-    <None Include="shaders\shader_textured.frag" />
-    <None Include="shaders\shader_textured.vert" />
-    <None Include="shaders\skyboxShader.frag" />
-    <None Include="shaders\skyboxShader.vert" />
+    <None Include="shaders\shader_terrain.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shader_terrain.vert">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -12,6 +12,7 @@ extern bool isEscapeActive;
 extern glm::vec3 targetPosition;
 extern glm::vec3 escapePosition;
 
+
 // Pobiera pozycjê myszy w œwiecie 3D 
 glm::vec3 getMouseWorldPosition(GLFWwindow* window);
 
@@ -19,4 +20,7 @@ glm::vec3 getMouseWorldPosition(GLFWwindow* window);
 void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids);
 
 // Renderuje wskaŸniki interakcji (kule dla przyci¹gania i odpychania)
-void renderInteractionIndicators(void (*drawFunction)(Core::RenderContext&, glm::mat4, glm::vec3, float, float));
+void drawInteractionSpheres();
+void initInteractionSpheres();
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);

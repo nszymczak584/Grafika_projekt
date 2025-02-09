@@ -3,20 +3,37 @@
 #include "Render_Utils.h"
 #include "ext.hpp"
 #include "Shader_Loader.h"
+#include "Texture.h"
+#include "Camera.h"
+
 
 bool isTargetActive = false;
 bool isEscapeActive = false;
 
 glm::vec3 targetPosition(0.0);
 glm::vec3 escapePosition(0.0);
+float targetDistance = 5.0f;
 
 extern glm::vec3 cameraPos;
 extern glm::vec3 cameraDir;
 extern int WIDTH, HEIGHT;
 extern GLuint program;
-extern Core::RenderContext sphereContext;
-extern glm::mat4 createPerspectiveMatrix();
-extern glm::mat4 createCameraMatrix();
+
+GLuint lava, lavaNormalMap;
+GLuint moss, mossNormalMap;
+Core::RenderContext sphereContext;
+
+extern void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID, GLuint normalMapID, float ambientLight = 0.2f);
+extern void loadModelToContext(std::string path, Core::RenderContext& context);
+
+void initInteractionSpheres() {
+    loadModelToContext("./models/sphere.obj", sphereContext);
+    
+    lava = Core::LoadTexture("textures/lava/lava.jpg");
+    lavaNormalMap = Core::LoadTexture("textures/lava/lava_normal.png");
+    moss = Core::LoadTexture("textures/moss/moss.jpg");
+    mossNormalMap = Core::LoadTexture("textures/moss/moss_normal.png");
+}
 
 glm::vec3 getMouseWorldPosition(GLFWwindow* window) {
     double mouseX, mouseY;
@@ -35,7 +52,7 @@ glm::vec3 getMouseWorldPosition(GLFWwindow* window) {
     glm::vec3 ray_world = glm::vec3(glm::inverse(createCameraMatrix()) * ray_eye);
     ray_world = glm::normalize(ray_world);
 
-    return cameraPos + ray_world * 5.0f; // Pozycja 5 jednostek od kamery wzd³u¿ promienia
+    return cameraPos + ray_world * targetDistance;
 }
 
 void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids) {
@@ -76,15 +93,35 @@ void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids) {
     for (auto& boid : boids) {
         glm::vec3 force = glm::normalize((position - boid.getPosition()) * forceDirection) * forceStrength;
         boid.applyForce(force);
-    }
+    } 
 }
 
-void renderInteractionIndicators(void (*drawFunction)(Core::RenderContext&, glm::mat4, glm::vec3, float, float)) {
-    // Niebieska kula dla przyci¹gania
-    if (isTargetActive) 
-        drawFunction(sphereContext, glm::translate(targetPosition) * glm::scale(glm::vec3(0.1f)), glm::vec3(0.0f, 0.0f, 1.0f), 0.3f, 0.0f); 
-    
-    // Czerwona kula dla odpychania
-    if (isEscapeActive) 
-        drawFunction(sphereContext, glm::translate(escapePosition) * glm::scale(glm::vec3(0.1f)), glm::vec3(1.0f, 0.0f, 0.0f), 0.3f, 0.0f); 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    float zoomSpeed = 0.1f; // Szybkoœæ zoomu
+    float minDistance = 0.5f;  // Minimalna odleg³oœæ od kamery
+    float maxDistance = 5.0f; // Maksymalna odleg³oœæ od kamery
+
+    targetDistance += static_cast<float>(yoffset) * zoomSpeed;
+
+    // Ograniczenie zakresu zoomowania
+    if (targetDistance < minDistance) targetDistance = minDistance;
+    if (targetDistance > maxDistance) targetDistance = maxDistance;
+}
+
+void drawInteractionSpheres(){
+    // Niebieska kula (przyci¹ganie) - lawa
+    if (isTargetActive) {
+        drawObjectTexturedNormal(
+            sphereContext,
+            glm::translate(targetPosition) * glm::scale(glm::vec3(0.1f)),
+            moss, mossNormalMap, 0.2f);
+    }
+
+    // Czerwona kula (odpychanie) - mech
+    if (isEscapeActive) {
+        drawObjectTexturedNormal(
+            sphereContext,
+            glm::translate(escapePosition) * glm::scale(glm::vec3(0.1f)),
+            lava, lavaNormalMap, 0.2f);
+    }
 }

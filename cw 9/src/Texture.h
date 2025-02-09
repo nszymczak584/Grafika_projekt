@@ -2,6 +2,8 @@
  
 #include "glew.h"
 #include "freeglut.h"
+#include <vector>
+#include <string>
 
 namespace Core
 {
