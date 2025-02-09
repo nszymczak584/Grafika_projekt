@@ -13,10 +13,10 @@
   <ItemGroup>
     <ClCompile Include="src\boid.cpp" />
     <ClCompile Include="src\BoidInteraction.cpp" />
-    <ClCompile Include="src\Box.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\Drone.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\NormalMapToggle.cpp" />
     <ClCompile Include="src\PerlinNoise.cpp" />
     <ClCompile Include="src\Render_Utils.cpp" />
     <ClCompile Include="src\Shader_Loader.cpp" />
@@ -25,14 +25,19 @@
     <ClCompile Include="src\SOIL\image_helper.c" />
     <ClCompile Include="src\SOIL\SOIL.c" />
     <ClCompile Include="src\SOIL\stb_image_aug.c" />
+    <ClCompile Include="src\Temple.cpp" />
+    <ClCompile Include="src\Terrain.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\Tree.cpp" />
+    <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\boid.h" />
     <ClInclude Include="src\BoidInteraction.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Drone.h" />
-    <ClInclude Include="src\ex_9_1.hpp" />
+    <ClInclude Include="src\BoidSimulation.hpp" />
+    <ClInclude Include="src\NormalMapToggle.h" />
     <ClInclude Include="src\objload.h" />
     <ClInclude Include="src\PerlinNoise.h" />
     <ClInclude Include="src\Render_Utils.h" />
@@ -44,21 +49,21 @@
     <ClInclude Include="src\SOIL\stbi_DDS_aug.h" />
     <ClInclude Include="src\SOIL\stbi_DDS_aug_c.h" />
     <ClInclude Include="src\SOIL\stb_image_aug.h" />
+    <ClInclude Include="src\Temple.h" />
+    <ClInclude Include="src\Terrain.h" />
     <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\Tree.h" />
+    <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader_9_1.frag" />
-    <None Include="shaders\shader_9_1.vert" />
-    <None Include="shaders\shader_8_sun.frag" />
-    <None Include="shaders\shader_8_sun.vert" />
-    <None Include="shaders\shader_textured.frag" />
-    <None Include="shaders\shader_textured.vert" />
-    <None Include="shaders\skyboxShader.frag" />
-    <None Include="shaders\skyboxShader.vert" />
-    <None Include="shaders\terrain.frag" />
-    <None Include="shaders\terrain.vert" />
-    <None Include="shaders\test.frag" />
-    <None Include="shaders\test.vert" />
+    <None Include="shaders\shader_pbr.frag" />
+    <None Include="shaders\shader_pbr.vert" />
+    <None Include="shaders\shader_skybox.frag" />
+    <None Include="shaders\shader_skybox.vert" />
+    <None Include="shaders\shader_terrain.frag" />
+    <None Include="shaders\shader_terrain.vert" />
+    <None Include="shaders\shader_textured_normal.frag" />
+    <None Include="shaders\shader_textured_normal.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5BACD057-4B83-4CB6-A367-40A10BCE2149}</ProjectGuid>

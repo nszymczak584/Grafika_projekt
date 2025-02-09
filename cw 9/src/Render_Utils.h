@@ -70,3 +70,5 @@ namespace Core
 
 	void DrawContext(RenderContext& context);
 }
+
+void loadModelToContext(std::string path, Core::RenderContext& context);
