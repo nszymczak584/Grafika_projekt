@@ -29,13 +29,22 @@ namespace models {
 	Core::RenderContext treeContext;
 	Core::RenderContext leavesContext;
 	Core::RenderContext benchContext;
+	Core::RenderContext vaseContext;
+	Core::RenderContext tentContext;
 }
 
 namespace texture {
+	GLuint vase;
 	GLuint bark;
 	GLuint leaves;
 	GLuint temple;
 	GLuint pillar;
+	GLuint tent;
+	GLuint paper;
+	GLuint paper2;
+	GLuint paper3;
+	GLuint paper4;
+	GLuint paper5;
 }
 
 GLuint depthMapFBO;
@@ -81,6 +90,7 @@ const float flatAreaSize = 20.0f; // Size of the flat area
 const float flatAreaHeight = 0.0f; // Height of the flat area
 ModelData airplaneData;
 ModelData benchData;
+ModelData vaseData;
 std::vector<CollidableObject> collidableObjects; // Globalna lista przeszkód
 
 // Terrain generation and rendering functions
@@ -486,7 +496,16 @@ void renderScene(GLFWwindow* window) {
 			glm::scale(glm::vec3(0.01f)); 
 		BoundingBox bBox = calculateBoundingBox(airplaneData.localBBox, boidmodelMatrix);
 		boid.setBoundingBox(bBox);
-		drawObjectPBR(models::paperplaneContext, boidmodelMatrix, glm::vec3(boid.getGroupId() * 40.0f, 10.0f, boid.getGroupId()*40.0f), 0.2f, 0.0f);
+		GLuint boidTexture;
+		switch (boid.getGroupId()) {
+		case 0: boidTexture = texture::paper; break;
+		case 1: boidTexture = texture::paper2; break;
+		case 2: boidTexture = texture::paper3; break;
+		case 3: boidTexture = texture::paper4; break;
+		case 4: boidTexture = texture::paper5; break;
+		default: boidTexture = texture::paper; break;
+		}
+		drawObjectTextured(models::paperplaneContext, boidmodelMatrix, boidTexture);
 		
 	}
 	/*for (auto& boid : boids) {
@@ -523,8 +542,13 @@ void renderScene(GLFWwindow* window) {
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, flatAreaHeight, 0.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(140.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
 		glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-	glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.5f, flatAreaHeight+3.9f, -1.0f)) * glm::scale(glm::mat4(), glm::vec3(0.75));
 	drawObjectTextured(models::templeContext, templeModelMatrix, texture::temple);
+	glm::mat4 tentModelMatrix = glm::translate(glm::mat4(), glm::vec3(-30.0f, 0.f, 12.0f)) * 
+		glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+		glm::scale(glm::mat4(), glm::vec3(2.0f));
+	drawObjectTextured(models::tentContext, tentModelMatrix, texture::tent);
+	glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(), glm::vec3(0.001));
+	drawObjectTextured(models::vaseContext, vaseModelMatrix, texture::vase);
 	float benchSpacing = 2.0f; 
 	for (int i = 0; i < 2; ++i) {
 		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
@@ -565,10 +589,10 @@ void init(GLFWwindow* window)
 	programTest = shaderLoader.CreateProgram("shaders/test.vert", "shaders/test.frag");
 	programSun = shaderLoader.CreateProgram("shaders/shader_8_sun.vert", "shaders/shader_8_sun.frag");
 	programTextured = shaderLoader.CreateProgram("shaders/shader_textured.vert", "shaders/shader_textured.frag");
-	for (int groupId = 0; groupId < 6; ++groupId) {
+	for (int groupId = 0; groupId < 5; ++groupId) {
 		for (int i = 0; i < 20; ++i) {
 			glm::vec3 position(
-				(rand() % 850 -400.f)/100.0f,  // Losowanie x w zakresie [-4.0f, 5.0f]
+				(rand() % 850 -400.f)/100.0f,  // Losowanie x w zakresie [-4.0f, 4.5f]
 				(rand() % 455 + 145.f)/100.0f,          // Losowanie y w zakresie [1.45f, 6.0f]
 				(rand() % 600-400.f)/100.0f  // Losowanie z w zakresie [-4.0f, 2.0f]
 			);
@@ -595,12 +619,17 @@ void init(GLFWwindow* window)
 
 	loadModelToContext("./models/PaperAirplane.obj", models::paperplaneContext);
 	loadModelToContext("./models/temple.obj", models::templeContext);
+	loadModelToContext("./models/tent.obj", models::tentContext);
 	loadModelToContext("./models/objBench.obj", models::benchContext);
-
+	loadModelToContext("./models/Vase.obj", models::vaseContext);
 	loadModelToContext("./models/MapleTree.obj", models::treeContext);
 	loadModelToContext("./models/MapleTreeLeaves.obj", models::leavesContext);
 	airplaneData = loadModel("./models/PaperAirplane.obj");
 	benchData = loadModel("./models/objBench.obj");
+	vaseData = loadModel("./models/Vase.obj");
+	glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(), glm::vec3(0.001));
+	BoundingBox vaseBBox = calculateBoundingBox(vaseData.localBBox, vaseModelMatrix);
+	collidableObjects.push_back({ vaseBBox });
 	float benchSpacing = 2.0f;
 	for (int i = 0; i < 2; ++i) {
 		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
@@ -618,11 +647,17 @@ void init(GLFWwindow* window)
 	// Initialize terrain
 	generateTerrain();
 	initTerrainShader();
-
+	texture::tent = Core::LoadTexture("textures/tent/dome_tent_BaseColor.png");
 	texture::bark = Core::LoadTexture("textures/bark.jpg");
 	texture::leaves = Core::LoadTexture("textures/leaf.png");
 	texture::temple = Core::LoadTexture("textures/temple/map.png");
+	texture::vase = Core::LoadTexture("textures/vase/vase.jpg");
 	texture::pillar = Core::LoadTexture("textures/pillar/concrete_0018_color_1k.jpg");
+	texture::paper = Core::LoadTexture("textures/paper/paper_0022_color_1k.jpg");
+	texture::paper2 = Core::LoadTexture("textures/paper/paper_0022_color_1k_2.png");
+	texture::paper3 = Core::LoadTexture("textures/paper/paper_0022_color_1k_3.png");
+	texture::paper4 = Core::LoadTexture("textures/paper/paper_0022_color_1k_4.png");
+	texture::paper5 = Core::LoadTexture("textures/paper/paper_0022_color_1k_5.png");
 
 }
 
