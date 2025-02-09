@@ -1,0 +1,9 @@
+newmtl templeRender_A2GREENSG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd germany0WHITE.jpg
+bump  -bm 0.01 -mm_0_0.32069_germany010b.jpg
+Ni 1.00
+Ks 0.00 0.00 0.00

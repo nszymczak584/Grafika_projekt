@@ -16,7 +16,7 @@ extern glm::vec3 escapePosition;
 glm::vec3 getMouseWorldPosition(GLFWwindow* window);
 
 // Obs³uguje interakcjê myszy z boidami (przyci¹ganie i odpychanie)
-void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids);
+void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids, const std::vector<CollidableObject>& collidableObjects);
 
 // Renderuje wskaŸniki interakcji (kule dla przyci¹gania i odpychania)
 void renderInteractionIndicators(void (*drawFunction)(Core::RenderContext&, glm::mat4, glm::vec3, float, float));

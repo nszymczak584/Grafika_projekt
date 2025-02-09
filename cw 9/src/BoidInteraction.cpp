@@ -38,7 +38,7 @@ glm::vec3 getMouseWorldPosition(GLFWwindow* window) {
     return cameraPos + ray_world * 5.0f; // Pozycja 5 jednostek od kamery wzd³u¿ promienia
 }
 
-void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids) {
+void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids, const std::vector<CollidableObject>& collidableObjects) {
     bool leftPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     bool rightPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 
@@ -75,7 +75,7 @@ void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids) {
     // Aktualizacja pozycji boidów
     for (auto& boid : boids) {
         glm::vec3 force = glm::normalize((position - boid.getPosition()) * forceDirection) * forceStrength;
-        boid.applyForce(force);
+        boid.applyForce(force, collidableObjects);
     }
 }
 

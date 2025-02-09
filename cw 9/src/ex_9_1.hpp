@@ -4,13 +4,11 @@
 #include "ext.hpp"
 #include <iostream>
 #include <cmath>
-
+#include "collision.h"
 #include "Shader_Loader.h"
 #include "Render_Utils.h"
-
 #include "Texture.h"
 #include "boid.h"
-
 #include "Box.cpp"
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -24,25 +22,27 @@
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 int WIDTH = 500, HEIGHT = 500;
-
 namespace models {
 	Core::RenderContext paperplaneContext;
 	Core::RenderContext templeContext;
 	Core::RenderContext sphereContext;
 	Core::RenderContext treeContext;
 	Core::RenderContext leavesContext;
+	Core::RenderContext benchContext;
 }
 
 namespace texture {
 	GLuint bark;
 	GLuint leaves;
 	GLuint temple;
+	GLuint pillar;
 }
 
 GLuint depthMapFBO;
 GLuint depthMap;
 
 GLuint program;
+GLuint programLines;
 GLuint programSun;
 GLuint programTest;
 GLuint programTex;
@@ -63,7 +63,6 @@ glm::vec3 sunPos = glm::vec3(20.0f, 40.0f, -65.0f);
 //glm::vec3 sunDir = glm::normalize(glm::vec3(-0.228586f, -0.584819f, 0.778293f)); // Kierunek słońca dopasowany do SkyBox
 glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
 glm::vec3 sunColor = glm::vec3(0.8f, 0.8f, 0.6f) * 4.0f; // Bright sunlight
-
 float aspectRatio = 1.f;
 float exposition = 1.f;
 
@@ -80,8 +79,9 @@ std::vector<glm::vec3> treePositions; // Global variable to store tree positions
 // Define the flat area for the temple
 const float flatAreaSize = 20.0f; // Size of the flat area
 const float flatAreaHeight = 0.0f; // Height of the flat area
-
-
+ModelData airplaneData;
+ModelData benchData;
+std::vector<CollidableObject> collidableObjects; // Globalna lista przeszkód
 
 // Terrain generation and rendering functions
 void generateTerrain();
@@ -273,6 +273,123 @@ glm::mat4 createPerspectiveMatrix() {
 	perspectiveMatrix = glm::transpose(perspectiveMatrix);
 	return perspectiveMatrix;
 }
+void drawBoundingBox(const BoundingBox& bbox, const glm::vec3& color) {
+	glUseProgram(programLines);
+
+	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+	glm::mat4 modelMatrix = glm::mat4(1.0f); 
+	glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
+
+	glUniformMatrix4fv(glGetUniformLocation(programLines, "transformation"), 1, GL_FALSE, &transformation[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(programLines, "modelMatrix"), 1, GL_FALSE, &modelMatrix[0][0]);
+	glUniform3f(glGetUniformLocation(programLines, "color"), color.x, color.y, color.z);
+
+	// Wierzchołki bounding boxa
+	glm::vec3 vertices[] = {
+		{bbox.min.x, bbox.min.y, bbox.min.z}, // 0
+		{bbox.max.x, bbox.min.y, bbox.min.z}, // 1
+		{bbox.max.x, bbox.min.y, bbox.max.z}, // 2
+		{bbox.min.x, bbox.min.y, bbox.max.z}, // 3
+
+		{bbox.min.x, bbox.max.y, bbox.min.z}, // 4
+		{bbox.max.x, bbox.max.y, bbox.min.z}, // 5
+		{bbox.max.x, bbox.max.y, bbox.max.z}, // 6
+		{bbox.min.x, bbox.max.y, bbox.max.z}  // 7
+	};
+
+	// Indeksy do rysowania linii
+	unsigned int indices[] = {
+		0, 1, 1, 2, 2, 3, 3, 0, // Dolna podstawa
+		4, 5, 5, 6, 6, 7, 7, 4, // Górna podstawa
+		0, 4, 1, 5, 2, 6, 3, 7  // Połączenia między podstawami
+	};
+
+	GLuint vao, vbo, ebo;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
+
+	glBindVertexArray(vao);
+
+	// Bind vertices
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Bind indices
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// Set vertex attributes
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Draw lines
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// Cleanup
+	glBindVertexArray(0);
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ebo);
+	glDeleteVertexArrays(1, &vao);
+
+	glUseProgram(0);
+}
+void drawCubeFrames(const glm::mat4& modelMatrix, const glm::vec3& color) {
+	glUseProgram(programLines);
+
+	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+	glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
+
+	glUniformMatrix4fv(glGetUniformLocation(program, "transformation"), 1, GL_FALSE, &transformation[0][0]);
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelMatrix"), 1, GL_FALSE, &modelMatrix[0][0]);
+	glUniform3f(glGetUniformLocation(program, "color"), color.x, color.y, color.z);
+
+	glm::vec3 vertices[] = {
+		{-5.0f, 1.45f, -4.0f}, {4.5f, 1.45f, -4.0f},   // Dolna podstawa (y = 1)
+		{4.5f, 1.45f, 2.0f},  {-5.0f, 1.45f, 2.0f},
+
+		{-5.0f, 6.0f, -4.0f}, {4.5f, 6.0f, -4.0f},   // Górna podstawa (y = 6)
+		{4.5f, 6.0f, 2.0f},  {-5.0f, 6.0f, 2.0f}
+	};
+
+
+
+	unsigned int indices[] = {
+		0, 1, 1, 2, 2, 3, 3, 0, 
+		4, 5, 5, 6, 6, 7, 7, 4, 
+		0, 4, 1, 5, 2, 6, 3, 7  
+	};
+
+	GLuint vao, vbo, ebo;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
+
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDrawElements(GL_LINES, 24, GL_UNSIGNED_INT, 0);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	// Cleanup
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ebo);
+	glDeleteVertexArrays(1, &vao);
+}
 
 // TODO : Zintegorwać drawPBR by używało tekstur 
 void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec3 color, float roughness, float metallic) {
@@ -356,25 +473,33 @@ void renderScene(GLFWwindow* window) {
 	glUseProgram(program);
 	drawDrone(drawObjectPBR);
 
-	// Update boids
 	for (auto& boid : boids) {
-		boid.update(boids);
-
-
+		boid.update(boids, collidableObjects);
 	}
 
-	for (const auto& boid : boids) {
+	for (auto& boid : boids) {
 		float horizontalAngle = boid.getHorizontalAngle();
 		float verticalAngle = boid.getVerticalAngle();
-
-		// Tworzenie macierzy transformacji
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
+		glm::mat4 boidmodelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
 			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *   
-			glm::scale(glm::vec3(0.005f)); 
-
-		drawObjectPBR(models::paperplaneContext, modelMatrix, glm::vec3(boid.getGroupId() * 40.0f, 10.0f, boid.getGroupId()*40.0f), 0.2f, 0.0f);
+			glm::scale(glm::vec3(0.01f)); 
+		BoundingBox bBox = calculateBoundingBox(airplaneData.localBBox, boidmodelMatrix);
+		boid.setBoundingBox(bBox);
+		drawObjectPBR(models::paperplaneContext, boidmodelMatrix, glm::vec3(boid.getGroupId() * 40.0f, 10.0f, boid.getGroupId()*40.0f), 0.2f, 0.0f);
+		
 	}
+	/*for (auto& boid : boids) {
+		float horizontalAngle = boid.getHorizontalAngle();
+		float verticalAngle = boid.getVerticalAngle();
+		glm::mat4 boidmodelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
+			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::scale(glm::vec3(0.01f));
+		drawBoundingBox(calculateBoundingBox(airplaneData.localBBox, boidmodelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
+	}*/
+	glm::mat4 cubeModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); 
+	/*drawCubeFrames(cubeModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));*/
 
 	spotlightPos = dronePos + 0.2 * droneDir;
 	spotlightConeDir = droneDir;
@@ -394,8 +519,19 @@ void renderScene(GLFWwindow* window) {
 	}
 
 
-	glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
+	glm::mat4 templeModelMatrix =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, flatAreaHeight, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(140.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+		glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+	glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.5f, flatAreaHeight+3.9f, -1.0f)) * glm::scale(glm::mat4(), glm::vec3(0.75));
 	drawObjectTextured(models::templeContext, templeModelMatrix, texture::temple);
+	float benchSpacing = 2.0f; 
+	for (int i = 0; i < 2; ++i) {
+		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
+		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), benchPosition) * glm::scale(glm::mat4(), glm::vec3(0.75f));
+		drawObjectTextured(models::benchContext, benchModelMatrix, texture::pillar);
+		/*drawBoundingBox(calculateBoundingBox(benchData.localBBox, benchModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));*/
+	}
 
 	glUseProgram(0);
 	glfwSwapBuffers(window);
@@ -425,22 +561,21 @@ void init(GLFWwindow* window)
 	glEnable(GL_DEPTH_TEST);
 
 	program = shaderLoader.CreateProgram("shaders/shader_9_1.vert", "shaders/shader_9_1.frag");
+	programLines = shaderLoader.CreateProgram("shaders/shader_lines.vert", "shaders/shader_lines.frag");
 	programTest = shaderLoader.CreateProgram("shaders/test.vert", "shaders/test.frag");
 	programSun = shaderLoader.CreateProgram("shaders/shader_8_sun.vert", "shaders/shader_8_sun.frag");
 	programTextured = shaderLoader.CreateProgram("shaders/shader_textured.vert", "shaders/shader_textured.frag");
 	for (int groupId = 0; groupId < 6; ++groupId) {
-		for (int i = 0; i < 40; ++i) {
+		for (int i = 0; i < 20; ++i) {
 			glm::vec3 position(
-				(rand() % 200 + 0.1f) / 100.f,
-				(rand() % 200 + 0.1f) / 100.f,
-				(rand() % 200 + 0.1f)/100.f
-
-
-
+				(rand() % 850 -400.f)/100.0f,  // Losowanie x w zakresie [-4.0f, 5.0f]
+				(rand() % 455 + 145.f)/100.0f,          // Losowanie y w zakresie [1.45f, 6.0f]
+				(rand() % 600-400.f)/100.0f  // Losowanie z w zakresie [-4.0f, 2.0f]
 			);
-			boids.push_back(Boid(position, groupId,i));
+			boids.push_back(Boid(position, groupId, i));
 		}
 	}
+
 
 	for (int i = 0; i < 100; ++i) {
 		// Generate random position within the terrain bounds
@@ -452,20 +587,28 @@ void init(GLFWwindow* window)
 		treePositions.push_back(glm::vec3(x, y, z));
 	}
 
+
 	initSkybox(shaderLoader, loadModelToContext);
 	loadDroneModel("./models/drone.obj");
-	
-	loadModelToContext("./models/sphere.obj", sphereContext);
-	loadModelToContext("./models/spaceship.obj", shipContext);
 
-	loadModelToContext("./models/paperAirplane.obj", models::paperplaneContext);
+	loadModelToContext("./models/sphere.obj", sphereContext);
+
+	loadModelToContext("./models/PaperAirplane.obj", models::paperplaneContext);
 	loadModelToContext("./models/temple.obj", models::templeContext);
+	loadModelToContext("./models/objBench.obj", models::benchContext);
 
 	loadModelToContext("./models/MapleTree.obj", models::treeContext);
 	loadModelToContext("./models/MapleTreeLeaves.obj", models::leavesContext);
+	airplaneData = loadModel("./models/PaperAirplane.obj");
+	benchData = loadModel("./models/objBench.obj");
+	float benchSpacing = 2.0f;
+	for (int i = 0; i < 2; ++i) {
+		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
+		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), benchPosition) * glm::scale(glm::mat4(), glm::vec3(0.75f));
+		BoundingBox benchBBox = calculateBoundingBox(benchData.localBBox, benchModelMatrix);
 
-
-
+		collidableObjects.push_back({ benchBBox });
+	}
 	// Load terrain texture
 	terrainTexture = Core::LoadTexture("./textures/terrain/terrain.jpg");
 	terrainNormalMap = Core::LoadTexture("./textures/terrain/terrain_normal.jpg");
@@ -479,6 +622,7 @@ void init(GLFWwindow* window)
 	texture::bark = Core::LoadTexture("textures/bark.jpg");
 	texture::leaves = Core::LoadTexture("textures/leaf.png");
 	texture::temple = Core::LoadTexture("textures/temple/map.png");
+	texture::pillar = Core::LoadTexture("textures/pillar/concrete_0018_color_1k.jpg");
 
 }
 
@@ -493,7 +637,7 @@ void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) exposition -= 0.05;
 	if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) exposition += 0.05;
 
-	handleBoidInteraction(window, boids);
+	handleBoidInteraction(window, boids, collidableObjects);
 
 	updateDrone(window, deltaTime);
 	updateCamera();

@@ -15,6 +15,7 @@
     <ClCompile Include="src\BoidInteraction.cpp" />
     <ClCompile Include="src\Box.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\collision.cpp" />
     <ClCompile Include="src\Drone.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\PerlinNoise.cpp" />
@@ -31,6 +32,7 @@
     <ClInclude Include="src\boid.h" />
     <ClInclude Include="src\BoidInteraction.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\collision.h" />
     <ClInclude Include="src\Drone.h" />
     <ClInclude Include="src\ex_9_1.hpp" />
     <ClInclude Include="src\objload.h" />
@@ -47,6 +49,8 @@
     <ClInclude Include="src\Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\shader_lines.frag" />
+    <None Include="shaders\shader_lines.vert" />
     <None Include="shaders\shader_9_1.frag" />
     <None Include="shaders\shader_9_1.vert" />
     <None Include="shaders\shader_8_sun.frag" />
