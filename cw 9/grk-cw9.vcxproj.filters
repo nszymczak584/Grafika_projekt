@@ -121,12 +121,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader_8_sun.vert">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\shader_8_sun.frag">
-      <Filter>Shader Files</Filter>
-    </None>
     <None Include="shaders\shader_9_1.frag">
       <Filter>Shader Files</Filter>
     </None>
@@ -145,5 +139,11 @@
     <None Include="shaders\shader_textured.vert" />
     <None Include="shaders\skyboxShader.frag" />
     <None Include="shaders\skyboxShader.vert" />
+    <None Include="shaders\shadow.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shadow.frag">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
