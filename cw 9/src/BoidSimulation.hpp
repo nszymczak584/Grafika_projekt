@@ -200,7 +200,6 @@ void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec
 
 glm::vec3 sunPos = glm::vec3(20.0f, 40.0f, -65.0f);
 float near_plane = 0.05f, far_plane = 200.0f;
-glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
 void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID, GLuint normalMapID, float ambientLight = 0.2f) {
 	glUseProgram(programTexturedNormal);
 
@@ -218,7 +217,7 @@ void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatri
 
 	// Przekaż macierz LightVP
 
-	glm::mat4 lightVP = glm::ortho(-150.f, 150.f, -150.f, 150.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+	glm::mat4 lightVP = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
 	glUniformMatrix4fv(glGetUniformLocation(programTexturedNormal, "LightVP"), 1, GL_FALSE, (float*)&lightVP);
 
 	glUniform3f(glGetUniformLocation(programTexturedNormal, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
@@ -342,12 +341,15 @@ void renderShadowapSun()
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 
-	glm::mat4 lightVP = glm::ortho(-150.f, 150.f, -150.f, 150.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+	glm::mat4 lightVP = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
 
 	glUseProgram(programDepth);
 	GLuint lightSpaceMatrixLoc = glGetUniformLocation(programDepth, "lightSpaceMatrix");
 	glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightVP));
 
+	glm::mat4 templeModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, flatAreaHeight, 0.0f))
+		* glm::rotate(glm::mat4(1.0f), glm::radians(140.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+		* glm::scale(glm::mat4(1.0f), glm::vec3(0.5));
 	drawObjectDepth(models1::templeContext, lightVP, templeModelMatrix);
 	//drawObjectDepth(templeContext, lightVP, templeModelMatrix);
 
@@ -371,6 +373,14 @@ void renderShadowapSun()
 		// Create model matrix for the tree
 		glm::mat4 treeModelMatrix = glm::translate(glm::mat4(), position) * glm::scale(glm::mat4(), glm::vec3(0.2));
 		drawObjectDepth(treeContext, lightVP, treeModelMatrix);
+	}
+	for (auto& boid : boids) {
+		glm::mat4 boidModelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
+			glm::rotate(glm::mat4(1.0f), boid.getHorizontalAngle(), glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), boid.getVerticalAngle(), glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::scale(glm::vec3(0.01f));
+
+		drawObjectDepth(models1::paperplaneContext, lightVP, boidModelMatrix);
 	}
 
 
@@ -495,6 +505,7 @@ void init(GLFWwindow* window) {
 	loadModelToContext("./models/tent.obj", models1::tentContext);
 	loadModelToContext("./models/Vase.obj", models1::vaseContext);
 	loadModelToContext("./models/objBench.obj", models1::benchContext);
+	loadModelToContext("./models/PaperAirplane.obj", models1::paperplaneContext);
 	texture::paper = Core::LoadTexture("textures/paper/paper_1.jpg");
 	texture::paper2 = Core::LoadTexture("textures/paper/paper_2.png");
 	texture::paper3 = Core::LoadTexture("textures/paper/paper_3.png");

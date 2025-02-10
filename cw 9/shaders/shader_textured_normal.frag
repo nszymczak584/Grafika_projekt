@@ -14,26 +14,27 @@ in vec2 vecTex;
 in vec3 worldPos;
 in mat3 TBN; // Tangent-Bitangent-Normal matrix for normal mapping
 in vec4 sunSpacePos;
+in vec3 vecNormal;
 
 out vec4 outColor;
 
 float calculateShadow(vec4 sunSpacePos, vec3 normal, vec3 sunDir) {
-    // Normalize the coordinates
+    // Ujednorodnij wspó³rzêdne
     vec3 sunSpacePosNormalized = sunSpacePos.xyz / sunSpacePos.w;
 
-    // Scale to [0, 1] range
+    // Przeskaluj do zakresu [0, 1]
     sunSpacePosNormalized = sunSpacePosNormalized * 0.5 + 0.5;
 
-    // Get depth from the depth map
+    // Pobierz g³êbokoœæ z depthMap
     float closestDepth = texture(depthMap, sunSpacePosNormalized.xy).r;
 
-    // Current depth of the fragment
+    // Aktualna g³êbokoœæ fragmentu
     float currentDepth = sunSpacePosNormalized.z;
 
-    // Calculate bias based on the angle between the normal and light direction
+    // Oblicz bias na podstawie k¹ta miêdzy normaln¹ a kierunkiem œwiat³a
     float bias = max(0.01 * (1.0 - dot(normal, sunDir)), 0.001);
 
-    // Check if the fragment is in shadow
+    // SprawdŸ, czy fragment jest w cieniu
     return (currentDepth > closestDepth + bias) ? 1.0 : 0.0;
 }
 
@@ -65,6 +66,7 @@ void main()
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     float spec = pow(max(dot(mappedNormal, halfwayDir), 0.0), 64.0);
     vec3 specular = spec * sunColor;
+
 
     // Calculate shadow using the sun space position
     float shadow = calculateShadow(sunSpacePos, mappedNormal, sunDir);

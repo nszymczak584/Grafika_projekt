@@ -147,7 +147,7 @@ void drawTerrain( GLuint depthMap, glm::vec3 sunPos, float near_plane, float far
 	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
 
 	// Pass LightVP matrix for shadow mapping
-	glm::mat4 lightVP = glm::ortho(-150.f, 150.f, -150.f, 150.f, near_plane, far_plane) *
+	glm::mat4 lightVP = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane) *
 		glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
 	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "LightVP"), 1, GL_FALSE, &lightVP[0][0]);
 
