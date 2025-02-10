@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "ex_9_1.hpp"
+#include "BoidSimulation.hpp"
 
 int main(int argc, char** argv) {
 	glfwInit();

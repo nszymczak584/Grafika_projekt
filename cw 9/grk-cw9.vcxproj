@@ -32,7 +32,7 @@
     <ClInclude Include="src\BoidInteraction.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Drone.h" />
-    <ClInclude Include="src\ex_9_1.hpp" />
+    <ClInclude Include="src\BoidSimulation.hpp" />
     <ClInclude Include="src\objload.h" />
     <ClInclude Include="src\PerlinNoise.h" />
     <ClInclude Include="src\Render_Utils.h" />
