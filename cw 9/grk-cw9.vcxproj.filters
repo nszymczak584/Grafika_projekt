@@ -27,9 +27,6 @@
     <ClCompile Include="src\Shader_Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Box.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,6 +75,18 @@
     <ClCompile Include="src\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Collision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Decorations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NormalMapToggle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Rocks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\SOIL\image_helper.h">
@@ -97,9 +106,6 @@
     </ClInclude>
     <ClInclude Include="src\SOIL\image_DXT.h">
       <Filter>Source Files\SOIL</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ex_9_1.hpp">
-      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\boid.h">
       <Filter>Header Files</Filter>
@@ -143,6 +149,21 @@
     <ClInclude Include="src\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Collision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Decorations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\BoidSimulation.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NormalMapToggle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Rocks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader_9_1.frag">
@@ -157,12 +178,6 @@
     <None Include="shaders\shader_skybox.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\shader_terrain.frag">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="shaders\shader_terrain.vert">
-      <Filter>Shader Files</Filter>
-    </None>
     <None Include="shaders\terrain.frag" />
     <None Include="shaders\terrain.vert" />
     <None Include="shaders\shader_textured.frag" />
@@ -173,6 +188,20 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\shadow.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\test.frag" />
+    <None Include="shaders\test.vert" />
+    <None Include="shaders\shader_lines.frag" />
+    <None Include="shaders\shader_lines.vert" />
+    <None Include="shaders\shader_pbr.frag" />
+    <None Include="shaders\shader_pbr.vert" />
+    <None Include="shaders\shader_textured_normal.frag" />
+    <None Include="shaders\shader_textured_normal.vert" />
+    <None Include="shaders\shader_terrain.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shader_terrain.vert">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

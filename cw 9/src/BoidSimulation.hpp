@@ -49,7 +49,7 @@ namespace models {
 }
 
 glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
-glm::vec3 sunColor = glm::vec3(0.8f, 0.8f, 0.6f) * 4.0f;
+glm::vec3 sunColor = glm::vec3(0.8f, 0.8f, 0.6f) * 2.0f;
 
 void drawBoundingBox(const BoundingBox& bbox, const glm::vec3& color) {
 	glUseProgram(programLines);
@@ -190,6 +190,10 @@ void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec
 	Core::DrawContext(context);
 	glUseProgram(0);
 }
+
+glm::vec3 sunPos = glm::vec3(10.0f, 40.0f, -65.0f);
+float near_plane = 0.05f, far_plane = 200.0f;
+glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
 void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID, GLuint normalMapID, float ambientLight = 0.2f) {
 	glUseProgram(programTexturedNormal);
 
@@ -200,7 +204,20 @@ void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatri
 	glUniformMatrix4fv(glGetUniformLocation(programTexturedNormal, "transformation"), 1, GL_FALSE, (float*)&transformation);
 	glUniformMatrix4fv(glGetUniformLocation(programTexturedNormal, "modelMatrix"), 1, GL_FALSE, (float*)&modelMatrix);
 
+	// Przekaż teksturę depthMap
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glUniform1i(glGetUniformLocation(programTexturedNormal, "depthMap"), 0); // Przekaż indeks tekstury (0 dla GL_TEXTURE0)
+
+	// Przekaż macierz LightVP
+
+	glm::mat4 lightVP = glm::ortho(-50.f, 50.f, -50.f, 50.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+	glUniformMatrix4fv(glGetUniformLocation(programTexturedNormal, "LightVP"), 1, GL_FALSE, (float*)&lightVP);
+
+	glUniform3f(glGetUniformLocation(programTexturedNormal, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 	glUniform3f(glGetUniformLocation(programTexturedNormal, "sunDir"), sunDir.x, sunDir.y, sunDir.z);
+	glUniform3f(glGetUniformLocation(programTexturedNormal, "sunColor"), sunColor.x, sunColor.y, sunColor.z);
+	glUniform3f(glGetUniformLocation(programTexturedNormal, "sunPos"), sunPos.x, sunPos.y, sunPos.z);
 
 	glUniform1f(glGetUniformLocation(programTexturedNormal, "ambientLight"), ambientLight);
 
@@ -298,12 +315,14 @@ void drawObjectDepth(const Core::RenderContext& context, const glm::mat4& viewPr
 
 }
 
-glm::vec3 sunPos = glm::vec3(10.0f, 40.0f, -65.0f);
-float near_plane = 0.05f, far_plane = 200.0f;
-glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
+
 void renderShadowapSun()
 {
-	float time = glfwGetTime();
+	// Zapisz aktualny viewport
+	GLint viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	// Ustawienia viewportu dla shadowmap
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -323,7 +342,9 @@ void renderShadowapSun()
 		drawObjectDepth(treeContext, lightVP, treeModelMatrix);
 	}
 
+	// Przywróć domyślny framebuffer i viewport
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 
 void renderScene(GLFWwindow* window) {

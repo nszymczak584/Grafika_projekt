@@ -64,6 +64,8 @@
   <ItemGroup>
     <None Include="shaders\shader_9_1.frag" />
     <None Include="shaders\shader_9_1.vert" />
+    <None Include="shaders\shader_terrain.frag" />
+    <None Include="shaders\shader_terrain.vert" />
     <None Include="shaders\shader_textured.frag" />
     <None Include="shaders\shader_textured.vert" />
     <None Include="shaders\shadow.frag" />
