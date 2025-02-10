@@ -14,6 +14,7 @@
     <ClCompile Include="src\boid.cpp" />
     <ClCompile Include="src\BoidInteraction.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\collision.cpp" />
     <ClCompile Include="src\Drone.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\NormalMapToggle.cpp" />
@@ -35,6 +36,7 @@
     <ClInclude Include="src\boid.h" />
     <ClInclude Include="src\BoidInteraction.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\collision.h" />
     <ClInclude Include="src\Drone.h" />
     <ClInclude Include="src\BoidSimulation.hpp" />
     <ClInclude Include="src\NormalMapToggle.h" />
@@ -56,12 +58,12 @@
     <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\shader_lines.frag" />
+    <None Include="shaders\shader_lines.vert" />
     <None Include="shaders\shader_pbr.frag" />
     <None Include="shaders\shader_pbr.vert" />
     <None Include="shaders\shader_skybox.frag" />
     <None Include="shaders\shader_skybox.vert" />
-    <None Include="shaders\shader_terrain.frag" />
-    <None Include="shaders\shader_terrain.vert" />
     <None Include="shaders\shader_textured_normal.frag" />
     <None Include="shaders\shader_textured_normal.vert" />
   </ItemGroup>
