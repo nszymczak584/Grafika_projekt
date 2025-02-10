@@ -5,9 +5,11 @@
 #include "Shader_Loader.h"
 #include "Texture.h"
 #include "Camera.h"
+#include <iostream>
 
 bool isTargetActive = false;
 bool isEscapeActive = false;
+bool isPaused = false;
 
 glm::vec3 targetPosition(0.0);
 glm::vec3 escapePosition(0.0);
@@ -27,7 +29,7 @@ extern void loadModelToContext(std::string path, Core::RenderContext& context);
 
 void initInteractionSpheres() {
     loadModelToContext("./models/sphere.obj", sphereContext);
-    
+
     lava = Core::LoadTexture("textures/lava/lava.jpg");
     lavaNormalMap = Core::LoadTexture("textures/lava/lava_normal.png");
     moss = Core::LoadTexture("textures/moss/moss.jpg");
@@ -38,16 +40,13 @@ glm::vec3 getMouseWorldPosition(GLFWwindow* window) {
     double mouseX, mouseY;
     glfwGetCursorPos(window, &mouseX, &mouseY);
 
-    // Przekszta³cenie pozycji myszy do przestrzeni NDC (-1 do 1)
     float x = (2.0f * mouseX) / WIDTH - 1.0f;
-    float y = 1.0f - (2.0f * mouseY) / HEIGHT; // Oœ Y jest odwrócona w GLFW
+    float y = 1.0f - (2.0f * mouseY) / HEIGHT;
 
-    // Rzutowanie do przestrzeni oka
     glm::vec4 ray_clip(x, y, -1.0f, 1.0f);
     glm::vec4 ray_eye = glm::inverse(createPerspectiveMatrix()) * ray_clip;
     ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
 
-    // Rzutowanie do przestrzeni œwiata
     glm::vec3 ray_world = glm::vec3(glm::inverse(createCameraMatrix()) * ray_eye);
     ray_world = glm::normalize(ray_world);
 
@@ -55,10 +54,11 @@ glm::vec3 getMouseWorldPosition(GLFWwindow* window) {
 }
 
 void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids, const std::vector<CollidableObject>& collidableObjects) {
+    if (isPaused) return; // Nie aktualizujemy pozycji boidów, gdy symulacja jest wstrzymana
+
     bool leftPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     bool rightPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 
-    // Jeœli oba przyciski s¹ wciœniête - brak interakcji
     if (leftPressed && rightPressed) {
         isTargetActive = isEscapeActive = false;
         return;
@@ -68,47 +68,53 @@ void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids, const s
     glm::vec3 forceDirection;
     float forceStrength = 0.05f;
 
-    // Lewy przycisk myszy (przyci¹ganie)
     if (leftPressed) {
         position = targetPosition = getMouseWorldPosition(window);
-        forceDirection = glm::vec3(1.0f); // Si³a skierowana w stronê celu
+        forceDirection = glm::vec3(1.0f);
         isTargetActive = true;
         isEscapeActive = false;
     }
-    // Prawy przycisk myszy (odpychanie)
     else if (rightPressed) {
         position = escapePosition = getMouseWorldPosition(window);
-        forceDirection = glm::vec3(-1.0f); // Si³a skierowana przeciwnie do celu
+        forceDirection = glm::vec3(-1.0f);
         isEscapeActive = true;
         isTargetActive = false;
     }
     else {
-        // Jeœli ¿aden przycisk nie jest wciœniêty - brak interakcji
         isTargetActive = isEscapeActive = false;
         return;
     }
 
-    // Aktualizacja pozycji boidów
     for (auto& boid : boids) {
         glm::vec3 force = glm::normalize((position - boid.getPosition()) * forceDirection) * forceStrength;
         boid.applyForce(force, collidableObjects);
     }
 }
 
+void handlePause(GLFWwindow* window) {
+    static bool pPressedLastFrame = false;
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+        if (!pPressedLastFrame) {
+            isPaused = !isPaused;
+        }
+        pPressedLastFrame = true;
+    }
+    else {
+        pPressedLastFrame = false;
+    }
+}
+
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    float zoomSpeed = 0.1f; // Szybkoœæ zoomu
-    float minDistance = 0.5f;  // Minimalna odleg³oœæ od kamery
-    float maxDistance = 5.0f; // Maksymalna odleg³oœæ od kamery
+    float zoomSpeed = 0.1f;
+    float minDistance = 0.5f;
+    float maxDistance = 5.0f;
 
     targetDistance += static_cast<float>(yoffset) * zoomSpeed;
-
-    // Ograniczenie zakresu zoomowania
     if (targetDistance < minDistance) targetDistance = minDistance;
     if (targetDistance > maxDistance) targetDistance = maxDistance;
 }
 
-void drawInteractionSpheres(){
-    // Niebieska kula (przyci¹ganie) - lawa
+void drawInteractionSpheres() {
     if (isTargetActive) {
         drawObjectTexturedNormal(
             sphereContext,
@@ -116,7 +122,6 @@ void drawInteractionSpheres(){
             moss, mossNormalMap, 0.2f);
     }
 
-    // Czerwona kula (odpychanie) - mech
     if (isEscapeActive) {
         drawObjectTexturedNormal(
             sphereContext,

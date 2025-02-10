@@ -52,7 +52,6 @@ namespace models {
 
 glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
 glm::vec3 sunColor = glm::vec3(0.8f, 0.8f, 0.6f) * 4.0f;
-float exposition = 2.f;
 
 void drawBoundingBox(const BoundingBox& bbox, const glm::vec3& color) {
 	glUseProgram(programLines);
@@ -230,7 +229,11 @@ void renderScene(GLFWwindow* window) {
 	//drwaBoids();
 
 	// ------- Boids --------
-	for (auto& boid : boids) boid.update(boids, collidableObjects);
+	if (!isPaused) {
+		for (auto& boid : boids) {
+			boid.update(boids, collidableObjects);
+		}
+	}
 
 	for (auto& boid : boids) {
 		float horizontalAngle = boid.getHorizontalAngle();
@@ -353,6 +356,7 @@ void init(GLFWwindow* window) {
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
 
+	handlePause(window);
 	handleBoidInteraction(window, boids, collidableObjects);
 	handleNormalMapToggle(window);
 	updateDrone(window);
