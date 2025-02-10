@@ -128,23 +128,34 @@ void generateTerrain() {
 }
 
 // Rysowanie terenu
-void drawTerrain() {
+void drawTerrain( GLuint depthMap, glm::vec3 sunPos, float near_plane, float far_plane) {
 	glUseProgram(terrainShader);
 
-	// Bind the texture
-	Core::SetActiveTexture(terrainTexture, "terrainTexture", terrainShader, 0);
-
 	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
+	// Bind the terrain texture
+	Core::SetActiveTexture(terrainTexture, "terrainTexture", terrainShader, 0);
+	glUniform1i(glGetUniformLocation(terrainShader, "terrainTexture"), 0);
+
+	// Bind the shadow map
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glUniform1i(glGetUniformLocation(terrainShader, "depthMap"), 1);
+
 	glm::mat4 modelMatrix = glm::mat4(1.0f);
 	glm::mat4 mvp = viewProjectionMatrix * modelMatrix;
 	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "mvp"), 1, GL_FALSE, &mvp[0][0]);
 	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
 
+	// Pass LightVP matrix for shadow mapping
+	glm::mat4 lightVP = glm::ortho(-50.f, 50.f, -50.f, 50.f, near_plane, far_plane) *
+		glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+	glUniformMatrix4fv(glGetUniformLocation(terrainShader, "LightVP"), 1, GL_FALSE, &lightVP[0][0]);
+
 	// Set the texture scaling factor
-	float textureScale = 10.0f; // Adjust this value to control texture repetition
+	float textureScale = 10.0f;
 	glUniform1f(glGetUniformLocation(terrainShader, "textureScale"), textureScale);
 
-	// Set lighting uniforms (if not already set)
+	// Lighting uniforms
 	glUniform3f(glGetUniformLocation(terrainShader, "sunDir"), sunDir.x, sunDir.y, sunDir.z);
 	glUniform3f(glGetUniformLocation(terrainShader, "sunColor"), sunColor.x, sunColor.y, sunColor.z);
 	glUniform3f(glGetUniformLocation(terrainShader, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);

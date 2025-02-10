@@ -37,6 +37,7 @@ GLuint programDepth;
 GLuint programLines;
 GLuint programTextured;
 GLuint programTexturedNormal;
+GLuint programTest;
 
 ModelData airplaneData;
 ModelData benchData;
@@ -46,6 +47,8 @@ std::vector<CollidableObject> collidableObjects;
 std::vector<Boid> boids;
 namespace models {
 	Core::RenderContext paperplaneContext;
+	Core::RenderContext testContext;
+	Core::RenderContext templeContext;
 }
 
 glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
@@ -341,13 +344,15 @@ void renderShadowapSun()
 	GLuint lightSpaceMatrixLoc = glGetUniformLocation(programDepth, "lightSpaceMatrix");
 	glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightVP));
 
-
+	drawObjectDepth(models::templeContext, lightVP, templeModelMatrix);
 	//drawObjectDepth(templeContext, lightVP, templeModelMatrix);
 	for (const auto& position : treePositions) {
 		// Create model matrix for the tree
 		glm::mat4 treeModelMatrix = glm::translate(glm::mat4(), position) * glm::scale(glm::mat4(), glm::vec3(0.2));
 		drawObjectDepth(treeContext, lightVP, treeModelMatrix);
 	}
+
+
 
 	// Przywróć domyślny framebuffer i viewport
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -365,7 +370,7 @@ void renderScene(GLFWwindow* window) {
 	drawTrees();
 	drawInteractionSpheres();
 	drawTemple();
-	drawTerrain();
+	drawTerrain(depthMap,sunPos, near_plane, far_plane);
 	drawRocks();
 	//drwaBoids();
 
@@ -401,6 +406,14 @@ void renderScene(GLFWwindow* window) {
 	drawCubeBoundingBoxes();	// V
 	drawDecorations();	// Tent, Bench, Vase
 
+	//test depth buffer
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glUseProgram(programTest);
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, depthMap);
+	//Core::DrawContext(models::testContext);
+	//glUseProgram(0);
+
 	glfwSwapBuffers(window);
 }
 
@@ -425,6 +438,7 @@ void init(GLFWwindow* window) {
 	programLines = Core::Shader_Loader().CreateProgram("shaders/shader_lines.vert", "shaders/shader_lines.frag");
 	programTexturedNormal = Core::Shader_Loader().CreateProgram("shaders/shader_textured_normal.vert", "shaders/shader_textured_normal.frag");
 	programDepth = Core::Shader_Loader().CreateProgram("shaders/shadow.vert", "shaders/shadow.frag");
+	programTest = Core::Shader_Loader().CreateProgram("shaders/test.vert", "shaders/test.frag");
 
 	// **Generowanie boidów**
 	for (int groupId = 0; groupId < 5; ++groupId) {
@@ -453,6 +467,8 @@ void init(GLFWwindow* window) {
 
 		collidableObjects.push_back({ benchBBox });
 	}
+	loadModelToContext("./models/test.obj", models::testContext);
+	loadModelToContext("./models/temple.obj", models::templeContext);
 	texture::paper = Core::LoadTexture("textures/paper/paper_1.jpg");
 	texture::paper2 = Core::LoadTexture("textures/paper/paper_2.png");
 	texture::paper3 = Core::LoadTexture("textures/paper/paper_3.png");

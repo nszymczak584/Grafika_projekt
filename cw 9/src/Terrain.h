@@ -12,5 +12,5 @@ extern const float terrainScale;
 // Deklaracje funkcji
 void initTerrain();
 void generateTerrain();
-void drawTerrain();
+void drawTerrain( GLuint depthMap, glm::vec3 sunPos, float near_plane, float far_plane);
 float generateHeight(float x, float z);
