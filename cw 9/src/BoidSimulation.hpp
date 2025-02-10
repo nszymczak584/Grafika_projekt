@@ -244,11 +244,18 @@ void drawBoidBoundingBoxes() {
 	for (auto& boid : boids) {
 		float horizontalAngle = boid.getHorizontalAngle();
 		float verticalAngle = boid.getVerticalAngle();
+		glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(), glm::vec3(0.001));
+		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(),  glm::vec3(0.5f, flatAreaHeight + 0.9f, -1.0f)) * glm::scale(glm::mat4(), glm::vec3(0.75f));
+		glm::mat4 bench2ModelMatrix = glm::translate(glm::mat4(), glm::vec3(2.5f, flatAreaHeight + 0.9f, -1.0f)) * glm::scale(glm::mat4(), glm::vec3(0.75f));
 		glm::mat4 boidModelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
 			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
 			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *
 			glm::scale(glm::vec3(0.01f));
+
 		drawBoundingBox(calculateBoundingBox(airplaneData.localBBox, boidModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
+		drawBoundingBox(calculateBoundingBox(vaseData.localBBox, vaseModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
+		drawBoundingBox(calculateBoundingBox(benchData.localBBox, benchModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
+		drawBoundingBox(calculateBoundingBox(benchData.localBBox, bench2ModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
 	}
 }
 void drawCubeBoundingBoxes() {
