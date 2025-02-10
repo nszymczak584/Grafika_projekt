@@ -1,24 +1,12 @@
 #include "glew.h"
-#include <GLFW/glfw3.h>
-#include "glm.hpp"
-#include "ext.hpp"
-#include <iostream>
-#include <cmath>
-#include "collision.h"
-#include "Shader_Loader.h"
 #include "Render_Utils.h"
 #include "Shader_Loader.h"
 #include "Texture.h"
 #include <GLFW/glfw3.h>
 
-#include "boid.h"
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <string>
-#include "Skybox.h"
-#include "PerlinNoise.h"
+#include "Boid.h"
 #include "BoidInteraction.h"
+#include "Collision.h"
 #include "Drone.h"
 #include "NormalMapToggle.h"
 #include "Skybox.h"
@@ -46,7 +34,7 @@ GLuint programTexturedNormal;
 ModelData airplaneData;
 ModelData benchData;
 ModelData vaseData;
-std::vector<CollidableObject> collidableObjects; // Globalna lista przeszkód
+std::vector<CollidableObject> collidableObjects;
 
 std::vector<Boid> boids;
 namespace models {
@@ -257,7 +245,7 @@ void renderScene(GLFWwindow* window) {
 		case 4: boidTexture = texture::paper5; break;
 		default: boidTexture = texture::paper; break;
 		}
-		drawObjectTextured(models::paperplaneContext, boidmodelMatrix, boidTexture);
+		drawObjectTexturedNormal(models::paperplaneContext, boidmodelMatrix, boidTexture, flatNormalMap);
 		
 	}
 	/*for (auto& boid : boids) {
@@ -276,18 +264,18 @@ void renderScene(GLFWwindow* window) {
 	glm::mat4 tentModelMatrix = glm::translate(glm::mat4(), glm::vec3(-30.0f, 0.f, 12.0f)) * 
 		glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
 		glm::scale(glm::mat4(), glm::vec3(2.0f));
-	drawObjectTextured(models::tentContext, tentModelMatrix, texture::tent);
+	drawObjectTexturedNormal(models::tentContext, tentModelMatrix, texture::tent, flatNormalMap);
 
 	// Vase
 	glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(), glm::vec3(0.001));
-	drawObjectTextured(models::vaseContext, vaseModelMatrix, texture::vase);
+	drawObjectTexturedNormal(models::vaseContext, vaseModelMatrix, texture::vase, flatNormalMap);
 
 	// Bench
 	float benchSpacing = 2.0f; 
 	for (int i = 0; i < 2; ++i) {
 		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
 		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), benchPosition) * glm::scale(glm::mat4(), glm::vec3(0.75f));
-		drawObjectTextured(models::benchContext, benchModelMatrix, texture::pillar);
+		drawObjectTexturedNormal(models::benchContext, benchModelMatrix, texture::pillar, flatNormalMap);
 		/*drawBoundingBox(calculateBoundingBox(benchData.localBBox, benchModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));*/
 	}
 
@@ -305,7 +293,6 @@ void init(GLFWwindow* window) {
 	initTemple();
 	initTerrain();
 	//initBoids();
-
 	initNormalMapToggle();
 
 	// **Inicjalizacja shaderów**
@@ -356,7 +343,7 @@ void init(GLFWwindow* window) {
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
 
-	handleBoidInteraction(window, boids, collidableObjects); // Nowe poprawne
+	handleBoidInteraction(window, boids, collidableObjects);
 	handleNormalMapToggle(window);
 	updateDrone(window);
 	updateCamera();

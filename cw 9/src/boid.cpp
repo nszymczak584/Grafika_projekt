@@ -3,7 +3,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <iostream>
 #include <ctime>
-#include "collision.h"
+#include "Collision.h"
 
 const float MAX_SPEED = 1.0f;
 const float NEIGHBOR_RADIUS = 2.0f;

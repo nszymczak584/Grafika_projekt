@@ -1,7 +1,7 @@
 #ifndef BOID_H
 #define BOID_H
 #include "glm.hpp"
-#include "collision.h"
+#include "Collision.h"
 #include <vector>
 
 class Boid {

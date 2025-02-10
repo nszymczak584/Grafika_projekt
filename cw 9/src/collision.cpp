@@ -1,5 +1,5 @@
 // DOP14.cpp
-#include "collision.h"
+#include "Collision.h"
 #include "glew.h"
 #include <GLFW/glfw3.h>
 #include "glm.hpp"
