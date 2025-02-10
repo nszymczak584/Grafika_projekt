@@ -26,6 +26,11 @@ namespace texture {
 	GLuint paper3;
 	GLuint paper4;
 	GLuint paper5;
+	GLuint paperNormalMap;
+	GLuint vaseNormalMap;
+	GLuint tentNormalMap;
+	GLuint concrete;
+	GLuint concreteNormalMap;
 }
 
 GLuint program;
@@ -166,7 +171,6 @@ void drawCubeFrames(const glm::mat4& modelMatrix, const glm::vec3& color) {
 	glDeleteBuffers(1, &ebo);
 	glDeleteVertexArrays(1, &vao);
 }
-
 void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec3 color, float roughness, float metallic, float exposition = 2.f) {
 	glUseProgram(program);
 	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
@@ -189,7 +193,6 @@ void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec
 	Core::DrawContext(context);
 	glUseProgram(0);
 }
-
 void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID, GLuint normalMapID, float ambientLight = 0.2f) {
 	glUseProgram(programTexturedNormal);
 
@@ -247,7 +250,7 @@ void renderScene(GLFWwindow* window) {
 		case 4: boidTexture = texture::paper5; break;
 		default: boidTexture = texture::paper; break;
 		}
-		drawObjectTexturedNormal(models::paperplaneContext, boidmodelMatrix, boidTexture, flatNormalMap);
+		drawObjectTexturedNormal(models::paperplaneContext, boidmodelMatrix, boidTexture, texture::paperNormalMap);
 		
 	}
 	/*for (auto& boid : boids) {
@@ -266,18 +269,18 @@ void renderScene(GLFWwindow* window) {
 	glm::mat4 tentModelMatrix = glm::translate(glm::mat4(), glm::vec3(-30.0f, 0.f, 12.0f)) * 
 		glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
 		glm::scale(glm::mat4(), glm::vec3(2.0f));
-	drawObjectTexturedNormal(models::tentContext, tentModelMatrix, texture::tent, flatNormalMap);
+	drawObjectTexturedNormal(models::tentContext, tentModelMatrix, texture::tent, texture::tentNormalMap);
 
 	// Vase
 	glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(), glm::vec3(0.001));
-	drawObjectTexturedNormal(models::vaseContext, vaseModelMatrix, texture::vase, flatNormalMap);
+	drawObjectTexturedNormal(models::vaseContext, vaseModelMatrix, texture::vase, texture::vaseNormalMap);
 
 	// Bench
 	float benchSpacing = 2.0f; 
 	for (int i = 0; i < 2; ++i) {
 		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
 		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), benchPosition) * glm::scale(glm::mat4(), glm::vec3(0.75f));
-		drawObjectTexturedNormal(models::benchContext, benchModelMatrix, texture::pillar, flatNormalMap);
+		drawObjectTexturedNormal(models::benchContext, benchModelMatrix, texture::pillar, texture::concreteNormalMap);
 		/*drawBoundingBox(calculateBoundingBox(benchData.localBBox, benchModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));*/
 	}
 
@@ -333,14 +336,18 @@ void init(GLFWwindow* window) {
 
 		collidableObjects.push_back({ benchBBox });
 	}
-	texture::tent = Core::LoadTexture("textures/tent/dome_tent_BaseColor.png");
+	texture::tent = Core::LoadTexture("textures/tent/tent.png");
+	texture::tentNormalMap = Core::LoadTexture("textures/tent/tent_normal.png");
 	texture::vase = Core::LoadTexture("textures/vase/vase.jpg");
-	texture::pillar = Core::LoadTexture("textures/pillar/concrete_0018_color_1k.jpg");
-	texture::paper = Core::LoadTexture("textures/paper/paper_0022_color_1k.jpg");
-	texture::paper2 = Core::LoadTexture("textures/paper/paper_0022_color_1k_2.png");
-	texture::paper3 = Core::LoadTexture("textures/paper/paper_0022_color_1k_3.png");
-	texture::paper4 = Core::LoadTexture("textures/paper/paper_0022_color_1k_4.png");
-	texture::paper5 = Core::LoadTexture("textures/paper/paper_0022_color_1k_5.png");
+	texture::vaseNormalMap = Core::LoadTexture("textures/vase/vase_normal.png");
+	texture::pillar = Core::LoadTexture("textures/pillar/concrete.jpg");
+	texture::concreteNormalMap = Core::LoadTexture("textures/pillar/concrete_normal.png");
+	texture::paper = Core::LoadTexture("textures/paper/paper_1.jpg");
+	texture::paper2 = Core::LoadTexture("textures/paper/paper_2.png");
+	texture::paper3 = Core::LoadTexture("textures/paper/paper_3.png");
+	texture::paper4 = Core::LoadTexture("textures/paper/paper_4.png");
+	texture::paper5 = Core::LoadTexture("textures/paper/paper_5.png");
+	texture::paperNormalMap = Core::LoadTexture("textures/paper/paper_normal.png");
 }
 
 void processInput(GLFWwindow* window) {
