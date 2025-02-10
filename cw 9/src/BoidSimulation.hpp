@@ -14,23 +14,17 @@
 #include "Terrain.h"
 #include "Tree.h"
 #include "Rocks.h"
+#include "Decorations.h"
 
 int WIDTH, HEIGHT;
 
 namespace texture {
-	GLuint vase;
-	GLuint pillar;
-	GLuint tent;
 	GLuint paper;
 	GLuint paper2;
 	GLuint paper3;
 	GLuint paper4;
 	GLuint paper5;
 	GLuint paperNormalMap;
-	GLuint vaseNormalMap;
-	GLuint tentNormalMap;
-	GLuint concrete;
-	GLuint concreteNormalMap;
 }
 
 GLuint program;
@@ -45,9 +39,6 @@ std::vector<CollidableObject> collidableObjects;
 std::vector<Boid> boids;
 namespace models {
 	Core::RenderContext paperplaneContext;
-	Core::RenderContext benchContext;
-	Core::RenderContext vaseContext;
-	Core::RenderContext tentContext;
 }
 
 glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
@@ -302,25 +293,7 @@ void renderScene(GLFWwindow* window) {
 	}
 	drawBoidBoundingBoxes();	// B
 	drawCubeBoundingBoxes();	// V
-	
-	// Tent
-	glm::mat4 tentModelMatrix = glm::translate(glm::mat4(), glm::vec3(-30.0f, 0.f, 12.0f)) * 
-		glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
-		glm::scale(glm::mat4(), glm::vec3(2.0f));
-	drawObjectTexturedNormal(models::tentContext, tentModelMatrix, texture::tent, texture::tentNormalMap);
-
-	// Vase
-	glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(), glm::vec3(0.001));
-	drawObjectTexturedNormal(models::vaseContext, vaseModelMatrix, texture::vase, texture::vaseNormalMap);
-
-	// Bench
-	float benchSpacing = 2.0f; 
-	for (int i = 0; i < 2; ++i) {
-		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 0.9f, -1.0f);
-		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(), benchPosition) * glm::scale(glm::mat4(), glm::vec3(0.75f));
-		drawObjectTexturedNormal(models::benchContext, benchModelMatrix, texture::pillar, texture::concreteNormalMap);
-		/*drawBoundingBox(calculateBoundingBox(benchData.localBBox, benchModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));*/
-	}
+	drawDecorations();	// Tent, Bench, Vase
 
 	glfwSwapBuffers(window);
 }
@@ -338,6 +311,7 @@ void init(GLFWwindow* window) {
 	//initBoids();
 	initNormalMapToggle();
 	initRocks();
+	initDecorations();
 
 	// **Inicjalizacja shaderów**
 	program = Core::Shader_Loader().CreateProgram("shaders/shader_pbr.vert", "shaders/shader_pbr.frag");
@@ -357,9 +331,6 @@ void init(GLFWwindow* window) {
 	}
 	loadModelToContext("./models/PaperAirplane.obj", models::paperplaneContext);
 
-	loadModelToContext("./models/tent.obj", models::tentContext);
-	loadModelToContext("./models/objBench.obj", models::benchContext);
-	loadModelToContext("./models/Vase.obj", models::vaseContext);
 	airplaneData = loadModel("./models/PaperAirplane.obj");
 	benchData = loadModel("./models/objBench.obj");
 	vaseData = loadModel("./models/Vase.obj");
@@ -374,12 +345,6 @@ void init(GLFWwindow* window) {
 
 		collidableObjects.push_back({ benchBBox });
 	}
-	texture::tent = Core::LoadTexture("textures/tent/tent.png");
-	texture::tentNormalMap = Core::LoadTexture("textures/tent/tent_normal.png");
-	texture::vase = Core::LoadTexture("textures/vase/vase.jpg");
-	texture::vaseNormalMap = Core::LoadTexture("textures/vase/vase_normal.png");
-	texture::pillar = Core::LoadTexture("textures/pillar/concrete.jpg");
-	texture::concreteNormalMap = Core::LoadTexture("textures/pillar/concrete_normal.png");
 	texture::paper = Core::LoadTexture("textures/paper/paper_1.jpg");
 	texture::paper2 = Core::LoadTexture("textures/paper/paper_2.png");
 	texture::paper3 = Core::LoadTexture("textures/paper/paper_3.png");
