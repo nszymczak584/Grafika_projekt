@@ -66,7 +66,7 @@ void handleBoidInteraction(GLFWwindow* window, std::vector<Boid>& boids, const s
 
     glm::vec3 position;
     glm::vec3 forceDirection;
-    float forceStrength = 0.05f;
+    float forceStrength = 0.15f;
 
     if (leftPressed) {
         position = targetPosition = getMouseWorldPosition(window);

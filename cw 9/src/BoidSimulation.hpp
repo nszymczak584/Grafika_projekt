@@ -57,7 +57,7 @@ void drawBoundingBox(const BoundingBox& bbox, const glm::vec3& color) {
 	glUseProgram(programLines);
 
 	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
-	glm::mat4 modelMatrix = glm::mat4(1.0f); 
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
 	glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
 
 	glUniformMatrix4fv(glGetUniformLocation(programLines, "transformation"), 1, GL_FALSE, &transformation[0][0]);
@@ -215,6 +215,50 @@ void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatri
 	glUseProgram(0);
 }
 
+bool isBoidBoundingBoxVisible = false;
+bool isCubeBoundingBoxVisible = false;
+void toggleBoundingBoxBoids(GLFWwindow* window) {
+	static bool bPressedLastFrame = false;
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) {
+		if (!bPressedLastFrame) {
+			isBoidBoundingBoxVisible = !isBoidBoundingBoxVisible;
+		}
+		bPressedLastFrame = true;
+	}
+	else {
+		bPressedLastFrame = false;
+	}
+}
+void toggleBoundingBoxCube(GLFWwindow* window) {
+	static bool vPressedLastFrame = false;
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS) {
+		if (!vPressedLastFrame) {
+			isCubeBoundingBoxVisible = !isCubeBoundingBoxVisible;
+		}
+		vPressedLastFrame = true;
+	}
+	else {
+		vPressedLastFrame = false;
+	}
+}
+void drawBoidBoundingBoxes() {
+	if (!isBoidBoundingBoxVisible) return;
+	for (auto& boid : boids) {
+		float horizontalAngle = boid.getHorizontalAngle();
+		float verticalAngle = boid.getVerticalAngle();
+		glm::mat4 boidModelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
+			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
+			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::scale(glm::vec3(0.01f));
+		drawBoundingBox(calculateBoundingBox(airplaneData.localBBox, boidModelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
+	}
+}
+void drawCubeBoundingBoxes() {
+	if (!isCubeBoundingBoxVisible) return;
+	glm::mat4 cubeModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	drawCubeFrames(cubeModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+}
+
 void renderScene(GLFWwindow* window) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -256,18 +300,9 @@ void renderScene(GLFWwindow* window) {
 		drawObjectTexturedNormal(models::paperplaneContext, boidmodelMatrix, boidTexture, texture::paperNormalMap);
 		
 	}
-	/*for (auto& boid : boids) {
-		float horizontalAngle = boid.getHorizontalAngle();
-		float verticalAngle = boid.getVerticalAngle();
-		glm::mat4 boidmodelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
-			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *
-			glm::scale(glm::vec3(0.01f));
-		drawBoundingBox(calculateBoundingBox(airplaneData.localBBox, boidmodelMatrix), glm::vec3(1.0f, 0.0f, 0.0f));
-	}*/
-	glm::mat4 cubeModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)); 
-	/*drawCubeFrames(cubeModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));*/
-
+	drawBoidBoundingBoxes();	// B
+	drawCubeBoundingBoxes();	// V
+	
 	// Tent
 	glm::mat4 tentModelMatrix = glm::translate(glm::mat4(), glm::vec3(-30.0f, 0.f, 12.0f)) * 
 		glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
@@ -356,10 +391,12 @@ void init(GLFWwindow* window) {
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
 
-	handlePause(window);
-	handleBoidInteraction(window, boids, collidableObjects);
-	handleNormalMapToggle(window);
-	updateDrone(window);
+	handlePause(window);			// P
+	toggleBoundingBoxBoids(window); // B
+	toggleBoundingBoxCube(window);  // V
+	handleBoidInteraction(window, boids, collidableObjects); // LMB | RMB | Scroll
+	handleNormalMapToggle(window);	// N
+	updateDrone(window);			// WASD | QE | CTRL SPACE
 	updateCamera();
 }
 
