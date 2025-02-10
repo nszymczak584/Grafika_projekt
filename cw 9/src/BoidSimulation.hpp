@@ -16,6 +16,8 @@
 #include "Rocks.h"
 #include "Decorations.h"
 
+const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
 int WIDTH, HEIGHT;
 
 namespace texture {
@@ -27,8 +29,13 @@ namespace texture {
 	GLuint paperNormalMap;
 }
 
+GLuint depthMapFBO;
+GLuint depthMap;
+
 GLuint program;
+GLuint programDepth;
 GLuint programLines;
+GLuint programTextured;
 GLuint programTexturedNormal;
 
 ModelData airplaneData;
@@ -128,9 +135,9 @@ void drawCubeFrames(const glm::mat4& modelMatrix, const glm::vec3& color) {
 
 
 	unsigned int indices[] = {
-		0, 1, 1, 2, 2, 3, 3, 0, 
-		4, 5, 5, 6, 6, 7, 7, 4, 
-		0, 4, 1, 5, 2, 6, 3, 7  
+		0, 1, 1, 2, 2, 3, 3, 0,
+		4, 5, 5, 6, 6, 7, 7, 4,
+		0, 4, 1, 5, 2, 6, 3, 7
 	};
 
 	GLuint vao, vbo, ebo;
@@ -250,9 +257,80 @@ void drawCubeBoundingBoxes() {
 	drawCubeFrames(cubeModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
 }
 
+void initShadowMap() {
+	// Create the depth map texture
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	// Create the FBO and attach the depth texture
+	glGenFramebuffers(1, &depthMapFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void drawObjectDepth(const Core::RenderContext& context, const glm::mat4& viewProjection, const glm::mat4& model)
+{
+	GLuint viewProjectionLoc = glGetUniformLocation(programDepth, "viewProjectionMatrix");
+	GLuint modelLoc = glGetUniformLocation(programDepth, "modelMatrix");
+
+	// Ustawienie macierzy w shaderze
+	glUniformMatrix4fv(viewProjectionLoc, 1, GL_FALSE, glm::value_ptr(viewProjection));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+	// Przypisanie VAO
+	glBindVertexArray(context.vertexArray);
+
+	// Rysowanie obiektu
+	glDrawElements(GL_TRIANGLES, context.size, GL_UNSIGNED_INT, 0);
+
+	// Odwiązanie VAO
+	glBindVertexArray(0);
+
+}
+
+glm::vec3 sunPos = glm::vec3(10.0f, 40.0f, -65.0f);
+float near_plane = 0.05f, far_plane = 200.0f;
+glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
+void renderShadowapSun()
+{
+	float time = glfwGetTime();
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+
+	glm::mat4 lightVP = glm::ortho(-50.f, 50.f, -50.f, 50.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+
+	glUseProgram(programDepth);
+	GLuint lightSpaceMatrixLoc = glGetUniformLocation(programDepth, "lightSpaceMatrix");
+	glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightVP));
+
+
+	//drawObjectDepth(templeContext, lightVP, templeModelMatrix);
+	for (const auto& position : treePositions) {
+		// Create model matrix for the tree
+		glm::mat4 treeModelMatrix = glm::translate(glm::mat4(), position) * glm::scale(glm::mat4(), glm::vec3(0.2));
+		drawObjectDepth(treeContext, lightVP, treeModelMatrix);
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void renderScene(GLFWwindow* window) {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	renderShadowapSun();
 
 	drawSkybox();
 	drawDrone();
@@ -275,8 +353,8 @@ void renderScene(GLFWwindow* window) {
 		float verticalAngle = boid.getVerticalAngle();
 		glm::mat4 boidmodelMatrix = glm::translate(glm::mat4(), boid.getPosition()) *
 			glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *   
-			glm::scale(glm::vec3(0.01f)); 
+			glm::rotate(glm::mat4(1.0f), verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f)) *
+			glm::scale(glm::vec3(0.01f));
 		BoundingBox bBox = calculateBoundingBox(airplaneData.localBBox, boidmodelMatrix);
 		boid.setBoundingBox(bBox);
 		GLuint boidTexture;
@@ -289,7 +367,7 @@ void renderScene(GLFWwindow* window) {
 		default: boidTexture = texture::paper; break;
 		}
 		drawObjectTexturedNormal(models::paperplaneContext, boidmodelMatrix, boidTexture, texture::paperNormalMap);
-		
+
 	}
 	drawBoidBoundingBoxes();	// B
 	drawCubeBoundingBoxes();	// V
@@ -301,6 +379,7 @@ void renderScene(GLFWwindow* window) {
 void init(GLFWwindow* window) {
 	glfwSetScrollCallback(window, scroll_callback);
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	initSkybox();
 	initDrone();
@@ -317,14 +396,15 @@ void init(GLFWwindow* window) {
 	program = Core::Shader_Loader().CreateProgram("shaders/shader_pbr.vert", "shaders/shader_pbr.frag");
 	programLines = Core::Shader_Loader().CreateProgram("shaders/shader_lines.vert", "shaders/shader_lines.frag");
 	programTexturedNormal = Core::Shader_Loader().CreateProgram("shaders/shader_textured_normal.vert", "shaders/shader_textured_normal.frag");
-	
+	programDepth = Core::Shader_Loader().CreateProgram("shaders/shadow.vert", "shaders/shadow.frag");
+
 	// **Generowanie boidów**
 	for (int groupId = 0; groupId < 5; ++groupId) {
 		for (int i = 0; i < 20; ++i) {
 			glm::vec3 position(
-				(rand() % 850 -400.f)/100.0f,  // Losowanie x w zakresie [-4.0f, 4.5f]
-				(rand() % 455 + 145.f)/100.0f,          // Losowanie y w zakresie [1.45f, 6.0f]
-				(rand() % 600-400.f)/100.0f  // Losowanie z w zakresie [-4.0f, 2.0f]
+				(rand() % 850 - 400.f) / 100.0f,  // Losowanie x w zakresie [-4.0f, 4.5f]
+				(rand() % 455 + 145.f) / 100.0f,          // Losowanie y w zakresie [1.45f, 6.0f]
+				(rand() % 600 - 400.f) / 100.0f  // Losowanie z w zakresie [-4.0f, 2.0f]
 			);
 			boids.push_back(Boid(position, groupId, i));
 		}
@@ -351,6 +431,8 @@ void init(GLFWwindow* window) {
 	texture::paper4 = Core::LoadTexture("textures/paper/paper_4.png");
 	texture::paper5 = Core::LoadTexture("textures/paper/paper_5.png");
 	texture::paperNormalMap = Core::LoadTexture("textures/paper/paper_normal.png");
+
+	initShadowMap();
 }
 
 void processInput(GLFWwindow* window) {

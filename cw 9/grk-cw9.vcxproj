@@ -62,6 +62,18 @@
     <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\shader_9_1.frag" />
+    <None Include="shaders\shader_9_1.vert" />
+    <None Include="shaders\shader_textured.frag" />
+    <None Include="shaders\shader_textured.vert" />
+    <None Include="shaders\shadow.frag" />
+    <None Include="shaders\shadow.vert" />
+    <None Include="shaders\skyboxShader.frag" />
+    <None Include="shaders\skyboxShader.vert" />
+    <None Include="shaders\terrain.frag" />
+    <None Include="shaders\terrain.vert" />
+    <None Include="shaders\test.frag" />
+    <None Include="shaders\test.vert" />
     <None Include="shaders\shader_lines.frag" />
     <None Include="shaders\shader_lines.vert" />
     <None Include="shaders\shader_pbr.frag" />
