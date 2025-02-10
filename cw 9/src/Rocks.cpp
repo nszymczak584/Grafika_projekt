@@ -89,3 +89,4 @@ void drawRocks() {
         drawObjectTexturedNormal(rock.model, rockTransforms[i], rock.texture, rock.normalMap);
     }
 }
+

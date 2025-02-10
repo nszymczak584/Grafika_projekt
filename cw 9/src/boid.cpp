@@ -63,7 +63,7 @@ void Boid::update(const std::vector<Boid>& boids, const std::vector<CollidableOb
 
     velocity += steering;
 
-    float maxSpeed = 0.01f;
+    float maxSpeed = 0.04f;
     if (glm::length(velocity) > maxSpeed) {
         velocity = glm::normalize(velocity) * maxSpeed;
     }
@@ -228,7 +228,7 @@ glm::vec3 Boid::separation(const std::vector<Boid>& boids) {
 void Boid::applyForce(const glm::vec3& force,const std::vector<CollidableObject>& collidableObjects) {
     velocity += force;
 
-    float maxSpeed = 0.01f;
+    float maxSpeed = 0.03f;
     if (glm::length(velocity) > maxSpeed) {
         velocity = glm::normalize(velocity) * maxSpeed;
     }

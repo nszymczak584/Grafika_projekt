@@ -45,10 +45,14 @@ ModelData vaseData;
 std::vector<CollidableObject> collidableObjects;
 
 std::vector<Boid> boids;
-namespace models {
+namespace models1 {
 	Core::RenderContext paperplaneContext;
 	Core::RenderContext testContext;
 	Core::RenderContext templeContext;
+	Core::RenderContext tentContext;
+	Core::RenderContext vaseContext;
+	Core::RenderContext benchContext;
+
 }
 
 glm::vec3 sunDir = glm::normalize(glm::vec3(0.228586f, 0.584819f, -0.778293f));
@@ -194,7 +198,7 @@ void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec
 	glUseProgram(0);
 }
 
-glm::vec3 sunPos = glm::vec3(10.0f, 40.0f, -65.0f);
+glm::vec3 sunPos = glm::vec3(20.0f, 40.0f, -65.0f);
 float near_plane = 0.05f, far_plane = 200.0f;
 glm::mat4 templeModelMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, flatAreaHeight, 0.0f)) * glm::scale(glm::mat4(), glm::vec3(0.5));
 void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatrix, GLuint textureID, GLuint normalMapID, float ambientLight = 0.2f) {
@@ -214,7 +218,7 @@ void drawObjectTexturedNormal(Core::RenderContext& context, glm::mat4 modelMatri
 
 	// Przekaż macierz LightVP
 
-	glm::mat4 lightVP = glm::ortho(-50.f, 50.f, -50.f, 50.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+	glm::mat4 lightVP = glm::ortho(-150.f, 150.f, -150.f, 150.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
 	glUniformMatrix4fv(glGetUniformLocation(programTexturedNormal, "LightVP"), 1, GL_FALSE, (float*)&lightVP);
 
 	glUniform3f(glGetUniformLocation(programTexturedNormal, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
@@ -338,19 +342,38 @@ void renderShadowapSun()
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 
-	glm::mat4 lightVP = glm::ortho(-50.f, 50.f, -50.f, 50.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
+	glm::mat4 lightVP = glm::ortho(-150.f, 150.f, -150.f, 150.f, near_plane, far_plane) * glm::lookAt(sunPos, sunPos - sunDir, glm::vec3(0, 1, 0));
 
 	glUseProgram(programDepth);
 	GLuint lightSpaceMatrixLoc = glGetUniformLocation(programDepth, "lightSpaceMatrix");
 	glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(lightVP));
 
-	drawObjectDepth(models::templeContext, lightVP, templeModelMatrix);
+	drawObjectDepth(models1::templeContext, lightVP, templeModelMatrix);
 	//drawObjectDepth(templeContext, lightVP, templeModelMatrix);
+
+
+	glm::mat4 tentModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-30.0f, 0.f, 12.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+		glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
+	drawObjectDepth(models1::tentContext, lightVP, tentModelMatrix);
+
+	glm::mat4 vaseModelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, flatAreaHeight + 0.8f, 1.5f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.001));
+	drawObjectDepth(models1::vaseContext, lightVP, vaseModelMatrix);
+
+	float benchSpacing = 2.0f;
+	for (int i = 0; i < 2; ++i) {
+		glm::vec3 benchPosition = glm::vec3(0.5f + i * benchSpacing, flatAreaHeight + 1.2f, -1.0f);
+		glm::mat4 benchModelMatrix = glm::translate(glm::mat4(1.0f), benchPosition) * glm::scale(glm::mat4(), glm::vec3(0.75f));
+		drawObjectDepth(models1::benchContext, lightVP, benchModelMatrix);
+	}
+
 	for (const auto& position : treePositions) {
 		// Create model matrix for the tree
 		glm::mat4 treeModelMatrix = glm::translate(glm::mat4(), position) * glm::scale(glm::mat4(), glm::vec3(0.2));
 		drawObjectDepth(treeContext, lightVP, treeModelMatrix);
 	}
+
+
 
 
 
@@ -399,7 +422,7 @@ void renderScene(GLFWwindow* window) {
 		case 4: boidTexture = texture::paper5; break;
 		default: boidTexture = texture::paper; break;
 		}
-		drawObjectTexturedNormal(models::paperplaneContext, boidmodelMatrix, boidTexture, texture::paperNormalMap);
+		drawObjectTexturedNormal(models1::paperplaneContext, boidmodelMatrix, boidTexture, texture::paperNormalMap);
 
 	}
 	drawBoidBoundingBoxes();	// B
@@ -411,7 +434,7 @@ void renderScene(GLFWwindow* window) {
 	//glUseProgram(programTest);
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, depthMap);
-	//Core::DrawContext(models::testContext);
+	//Core::DrawContext(models1::testContext);
 	//glUseProgram(0);
 
 	glfwSwapBuffers(window);
@@ -451,7 +474,7 @@ void init(GLFWwindow* window) {
 			boids.push_back(Boid(position, groupId, i));
 		}
 	}
-	loadModelToContext("./models/PaperAirplane.obj", models::paperplaneContext);
+	loadModelToContext("./models/PaperAirplane.obj", models1::paperplaneContext);
 
 	airplaneData = loadModel("./models/PaperAirplane.obj");
 	benchData = loadModel("./models/objBench.obj");
@@ -467,8 +490,11 @@ void init(GLFWwindow* window) {
 
 		collidableObjects.push_back({ benchBBox });
 	}
-	loadModelToContext("./models/test.obj", models::testContext);
-	loadModelToContext("./models/temple.obj", models::templeContext);
+	loadModelToContext("./models/test.obj", models1::testContext);
+	loadModelToContext("./models/temple.obj", models1::templeContext);
+	loadModelToContext("./models/tent.obj", models1::tentContext);
+	loadModelToContext("./models/Vase.obj", models1::vaseContext);
+	loadModelToContext("./models/objBench.obj", models1::benchContext);
 	texture::paper = Core::LoadTexture("textures/paper/paper_1.jpg");
 	texture::paper2 = Core::LoadTexture("textures/paper/paper_2.png");
 	texture::paper3 = Core::LoadTexture("textures/paper/paper_3.png");
