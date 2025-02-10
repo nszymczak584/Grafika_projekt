@@ -13,6 +13,7 @@
 #include "Temple.h"
 #include "Terrain.h"
 #include "Tree.h"
+#include "Rocks.h"
 
 int WIDTH, HEIGHT;
 
@@ -166,7 +167,7 @@ void drawCubeFrames(const glm::mat4& modelMatrix, const glm::vec3& color) {
 	glDeleteVertexArrays(1, &vao);
 }
 
-void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec3 color, float roughness, float metallic) {
+void drawObjectPBR(Core::RenderContext& context, glm::mat4 modelMatrix, glm::vec3 color, float roughness, float metallic, float exposition = 2.f) {
 	glUseProgram(program);
 	glm::mat4 viewProjectionMatrix = createPerspectiveMatrix() * createCameraMatrix();
 	glm::mat4 transformation = viewProjectionMatrix * modelMatrix;
@@ -222,6 +223,7 @@ void renderScene(GLFWwindow* window) {
 	drawInteractionSpheres();
 	drawTemple();
 	drawTerrain();
+	drawRocks();
 	//drwaBoids();
 
 	// ------- Boids --------
@@ -294,6 +296,7 @@ void init(GLFWwindow* window) {
 	initTerrain();
 	//initBoids();
 	initNormalMapToggle();
+	initRocks();
 
 	// **Inicjalizacja shaderów**
 	program = Core::Shader_Loader().CreateProgram("shaders/shader_pbr.vert", "shaders/shader_pbr.frag");
